@@ -1,0 +1,19 @@
+task_triage:
+  description: >-
+    Analyze this citizen complaint: '{issue_text}'. 
+    Extract the following details:
+    1. Main Category (e.g., Roads, Utilities, Sanitation, Safety)
+    2. Specific Sub-issue
+    3. Severity Level (Low, Medium, High)
+  expected_output: >-
+    A structured summary containing Category, Sub-issue, and Severity Level.
+  agent: triage_agent
+
+task_validation:
+  description: >-
+    Take the analysis from task_triage. You MUST use your 'check_database_for_duplicates' 
+    tool to see if a similar issue has already been reported. 
+    Combine your tool findings with the triage data to declare if it is 'DUPLICATE' or 'UNIQUE'.
+  expected_output: >-
+    A validation report specifying if the issue is a duplicate, along with any existing ticket IDs found.
+  agent: validation_agent
