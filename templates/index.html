@@ -825,6 +825,17 @@
                 <i class="ph ph-x" style="cursor:pointer;" onclick="document.getElementById('complaintModal').style.display='none'"></i>
             </div>
             <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Type a resident complaint below and our AI Agents will categorize and validate it against the database.</p>
+            
+            <div style="margin-bottom: 12px; display: flex; gap: 8px;">
+                <select id="apiProvider" style="padding: 8px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <option value="">Default Environment</option>
+                    <option value="gemini">Gemini</option>
+                    <option value="groq">Groq</option>
+                    <option value="openai">OpenAI</option>
+                </select>
+                <input type="password" id="apiKey" placeholder="API Key (optional)" style="flex:1; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color);">
+            </div>
+
             <textarea id="issueText" placeholder="e.g. There's a massive pothole in front of building A..."></textarea>
             <button class="modal-btn" onclick="submitIssue()" id="submitBtn">Run AI Agents</button>
             <div id="resultBox"></div>
@@ -837,6 +848,8 @@
             const btn = document.getElementById('submitBtn');
             const resultBox = document.getElementById('resultBox');
             const issue_text = document.getElementById('issueText').value;
+            const provider = document.getElementById('apiProvider').value;
+            const api_key = document.getElementById('apiKey').value;
             
             if(!issue_text.trim()) return;
 
@@ -848,7 +861,7 @@
                 const response = await fetch('/report', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ issue_text: issue_text })
+                    body: JSON.stringify({ issue_text: issue_text, provider: provider, api_key: api_key })
                 });
                 
                 const data = await response.json();

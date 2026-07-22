@@ -11,21 +11,31 @@ def load_yaml(path):
 
 app = Flask(__name__)
 
-def get_crew():
+def get_crew(provider=None, api_key=None):
     agents_config = load_yaml('config/agents.yaml')
     tasks_config = load_yaml('config/tasks.yaml')
 
+    active_llm = None
+    if provider and api_key:
+        if provider == 'gemini':
+            active_llm = LLM(model="gemini/gemini-1.5-flash", api_key=api_key)
+        elif provider == 'groq':
+            active_llm = LLM(model="groq/llama-3.1-8b-instant", api_key=api_key)
+        elif provider == 'openai':
+            active_llm = LLM(model="gpt-4o-mini", api_key=api_key)
+
     # Detect which API key is available in the Render Environment
-    if not os.environ.get("RENDER"):
-        active_llm = LLM(model="ollama/llama3.2", base_url="http://localhost:11434")
-    elif os.environ.get("GEMINI_API_KEY"):
-        active_llm = LLM(model="gemini/gemini-1.5-flash", api_key=os.environ.get("GEMINI_API_KEY"))
-    elif os.environ.get("GROQ_API_KEY"):
-        active_llm = LLM(model="groq/llama-3.1-8b-instant", api_key=os.environ.get("GROQ_API_KEY"))
-    elif os.environ.get("OPENAI_API_KEY"):
-        active_llm = LLM(model="gpt-4o-mini", api_key=os.environ.get("OPENAI_API_KEY"))
-    else:
-        return None, "No API Key found! Please add GEMINI_API_KEY, GROQ_API_KEY, or OPENAI_API_KEY to Render Environment Variables."
+    if not active_llm:
+        if not os.environ.get("RENDER"):
+            active_llm = LLM(model="ollama/llama3.2", base_url="http://localhost:11434")
+        elif os.environ.get("GEMINI_API_KEY"):
+            active_llm = LLM(model="gemini/gemini-1.5-flash", api_key=os.environ.get("GEMINI_API_KEY"))
+        elif os.environ.get("GROQ_API_KEY"):
+            active_llm = LLM(model="groq/llama-3.1-8b-instant", api_key=os.environ.get("GROQ_API_KEY"))
+        elif os.environ.get("OPENAI_API_KEY"):
+            active_llm = LLM(model="gpt-4o-mini", api_key=os.environ.get("OPENAI_API_KEY"))
+        else:
+            return None, "No API Key found! Please add GEMINI_API_KEY, GROQ_API_KEY, or OPENAI_API_KEY to Render Environment Variables, or provide one in the interface."
 
     triage_agent = Agent(
         config=agents_config['triage_agent'],
@@ -56,16 +66,29 @@ def get_crew():
 
 @app.route("/", methods=["GET"])
 def home():
-    return render_template("index.html")
+    if os.environ.get("GEMINI_API_KEY"):
+        llm_name = "Google Gemini 1.5 Flash"
+    elif os.environ.get("GROQ_API_KEY"):
+        llm_name = "Meta Llama-3.1 (via Groq)"
+    elif os.environ.get("OPENAI_API_KEY"):
+        llm_name = "OpenAI GPT-4o-mini"
+    elif not os.environ.get("RENDER"):
+        llm_name = "Local Ollama Llama 3.2"
+    else:
+        llm_name = "No Cloud LLM Configured"
+        
+    return render_template("index.html", active_llm=llm_name)
 
 @app.route("/report", methods=["POST"])
 def process_report():
     data = request.json or {}
     issue_text = data.get("issue_text", "")
+    provider = data.get("provider")
+    api_key = data.get("api_key")
     if not issue_text:
         return jsonify({"error": "No issue_text provided in the request body"}), 400
         
-    community_crew, error_msg = get_crew()
+    community_crew, error_msg = get_crew(provider, api_key)
     if error_msg:
         return jsonify({"error": error_msg}), 500
 
