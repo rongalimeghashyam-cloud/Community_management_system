@@ -1,5 +1,6 @@
 import os
 import yaml
+from flask import Flask, request, jsonify
 from crewai import Agent, Task, Crew, Process
 from crewai import LLM
 from tools import check_database_for_duplicates
@@ -53,15 +54,28 @@ community_crew = Crew(
     process=Process.sequential
 )
 
+app = Flask(__name__)
+
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"status": "running", "message": "CrewAI Community System is active. Send POST to /report"})
+
+@app.route("/report", methods=["POST"])
+def process_report():
+    data = request.json or {}
+    issue_text = data.get("issue_text", "")
+    if not issue_text:
+        return jsonify({"error": "No issue_text provided in the request body"}), 400
+        
+    print(f"\n[!] Instructing Crew to process issue: {issue_text}\n")
+    result = community_crew.kickoff(inputs={'issue_text': issue_text})
+    
+    # Return the raw result text output by the agents
+    return jsonify({
+        "status": "success", 
+        "output": str(result)
+    })
+
 if __name__ == "__main__":
-    sample_complaint = (
-        "There is a massive pothole right in front of the grocery store on Main Street. "
-        "It almost popped my tire this morning, someone needs to fix this ASAP before it causes an accident!"
-    )
-    
-    print("\n[!] Initializing Local ReAct-Enabled Multi-Agent Pipeline...\n")
-    
-    result = community_crew.kickoff(inputs={'issue_text': sample_complaint})
-    
-    print("\n###### SYSTEM OUTPUT ######\n")
-    print(result)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
