@@ -605,12 +605,12 @@
         </div>
 
         <nav class="nav-links">
-            <a href="#" class="nav-item active"><i class="ph ph-squares-four"></i> Overview</a>
-            <a href="#" class="nav-item"><i class="ph ph-users"></i> Residents</a>
-            <a href="#" class="nav-item"><i class="ph ph-wrench"></i> Maintenance</a>
-            <a href="#" class="nav-item"><i class="ph ph-calendar-blank"></i> Events</a>
-            <a href="#" class="nav-item"><i class="ph ph-shield-check"></i> Security</a>
-            <a href="#" class="nav-item"><i class="ph ph-gear"></i> Settings</a>
+            <a href="javascript:void(0)" class="nav-item active"><i class="ph ph-squares-four"></i> Overview</a>
+            <a href="javascript:void(0)" class="nav-item" onclick="alert('Navigating to Residents')"><i class="ph ph-users"></i> Residents</a>
+            <a href="javascript:void(0)" class="nav-item" onclick="alert('Navigating to Maintenance')"><i class="ph ph-wrench"></i> Maintenance</a>
+            <a href="javascript:void(0)" class="nav-item" onclick="alert('Navigating to Events')"><i class="ph ph-calendar-blank"></i> Events</a>
+            <a href="javascript:void(0)" class="nav-item" onclick="alert('Navigating to Security')"><i class="ph ph-shield-check"></i> Security</a>
+            <a href="javascript:void(0)" class="nav-item" onclick="alert('Navigating to Settings')"><i class="ph ph-gear"></i> Settings</a>
         </nav>
 
         <div class="sidebar-divider"></div>
@@ -620,8 +620,8 @@
         </button>
 
         <div class="bottom-links">
-            <a href="#" class="nav-item"><i class="ph ph-question"></i> Support</a>
-            <a href="#" class="nav-item"><i class="ph ph-sign-out"></i> Sign Out</a>
+            <a href="javascript:void(0)" class="nav-item" onclick="alert('Opening Support...')"><i class="ph ph-question"></i> Support</a>
+            <a href="javascript:void(0)" class="nav-item" onclick="alert('Signing out...')"><i class="ph ph-sign-out"></i> Sign Out</a>
         </div>
     </aside>
 
@@ -635,13 +635,13 @@
                 <input type="text" class="search-bar" placeholder="Search residents, units, or tickets...">
             </div>
             <div class="header-actions">
-                <button class="icon-btn">
+                <button class="icon-btn" onclick="alert('No new notifications')">
                     <i class="ph ph-bell"></i>
                     <span class="notification-dot"></span>
                 </button>
-                <button class="icon-btn"><i class="ph ph-question-mark"></i></button>
-                <button class="icon-btn"><i class="ph ph-dots-nine"></i></button>
-                <img src="https://i.pravatar.cc/150?img=5" alt="Profile" class="profile-pic">
+                <button class="icon-btn" onclick="alert('Help center opened')"><i class="ph ph-question-mark"></i></button>
+                <button class="icon-btn" onclick="alert('Apps menu opened')"><i class="ph ph-dots-nine"></i></button>
+                <img src="https://i.pravatar.cc/150?img=5" alt="Profile" class="profile-pic" onclick="alert('Profile clicked')">
             </div>
         </header>
 
@@ -653,7 +653,7 @@
                     <h1>Good morning, Sarah.</h1>
                     <p>Here's what's happening in Greenwood Village today.</p>
                 </div>
-                <button class="btn-export">
+                <button class="btn-export" onclick="alert('Exporting report...')">
                     <i class="ph ph-download-simple"></i> Export Report
                 </button>
             </div>
@@ -756,15 +756,15 @@
                                 <i class="ph ph-megaphone"></i>
                                 <span>Run AI<br>Analysis</span>
                             </div>
-                            <div class="action-btn">
+                            <div class="action-btn" onclick="alert('Schedule Maintenance feature coming soon!')">
                                 <i class="ph ph-wrench"></i>
                                 <span>Schedule<br>Maint.</span>
                             </div>
-                            <div class="action-btn">
+                            <div class="action-btn" onclick="alert('Add Resident feature coming soon!')">
                                 <i class="ph ph-user-plus"></i>
                                 <span>Add<br>Resident</span>
                             </div>
-                            <div class="action-btn">
+                            <div class="action-btn" onclick="alert('Record Payment feature coming soon!')">
                                 <i class="ph ph-money"></i>
                                 <span>Record<br>Payment</span>
                             </div>
