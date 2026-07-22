@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="content">
+    <div class="page-header">
+        <div class="page-title">
+            <h1>Residents Directory</h1>
+            <p>Manage community members and unit assignments.</p>
+        </div>
+        <button class="btn-export" onclick="alert('Adding resident...')">
+            <i class="ph ph-user-plus"></i> Add Resident
+        </button>
+    </div>
+    <div class="activity-card" style="padding: 20px;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--border-color); color: var(--text-muted); font-size: 14px;">
+                    <th style="padding: 12px 8px;">Name</th>
+                    <th style="padding: 12px 8px;">Unit</th>
+                    <th style="padding: 12px 8px;">Lease Status</th>
+                    <th style="padding: 12px 8px;">Contact</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for resident in residents %}
+                <tr style="border-bottom: 1px solid var(--border-color); font-size: 14px;">
+                    <td style="padding: 16px 8px; font-weight: 500;">{{ resident.name }}</td>
+                    <td style="padding: 16px 8px;">{{ resident.unit }}</td>
+                    <td style="padding: 16px 8px;">
+                        <span class="stat-badge {% if resident.status == 'Active' %}badge-blue{% else %}badge-red{% endif %}">{{ resident.status }}</span>
+                    </td>
+                    <td style="padding: 16px 8px; color: var(--text-muted);">{{ resident.contact }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

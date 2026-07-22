@@ -1,17 +1,22 @@
 import os
-import yaml
-from flask import Flask, request, jsonify, render_template
-from crewai import Agent, Task, Crew, Process
-from crewai import LLM
-from tools import check_database_for_duplicates
-
-def load_yaml(path):
-    with open(path, 'r') as file:
-        return yaml.safe_load(file)
-
-app = Flask(__name__)
-
 import json
+
+with open('app.py', 'r', encoding='utf-8') as f:
+    app_content = f.read()
+
+# We want to replace the `get_crew` and routes
+# We'll split before `@app.route("/", methods=["GET"])`
+
+split_marker = '@app.route("/", methods=["GET"])'
+if split_marker not in app_content:
+    print("Could not find split marker in app.py")
+    exit(1)
+
+top_part, bottom_part = app_content.split(split_marker)
+
+# Let's write the new routes and get_crew logic
+
+new_routes = """import json
 
 def get_settings():
     try:
@@ -159,27 +164,20 @@ def settings():
     return render_template("settings.html", settings=current_settings, success_msg=success_msg)
 
 @app.route("/report", methods=["POST"])
+"""
 
-def process_report():
-    data = request.json or {}
-    issue_text = data.get("issue_text", "")
-    provider = data.get("provider")
-    api_key = data.get("api_key")
-    if not issue_text:
-        return jsonify({"error": "No issue_text provided in the request body"}), 400
-        
-    community_crew, error_msg = get_crew(provider, api_key)
-    if error_msg:
-        return jsonify({"error": error_msg}), 500
+# Now we need to reconstruct app.py by replacing the get_crew and anything after it up to /report
+# Find get_crew definition in top_part
+get_crew_idx = top_part.find('def get_crew(')
+top_imports = top_part[:get_crew_idx]
 
-    print(f"\n[!] Instructing Crew to process issue: {issue_text}\n")
-    result = community_crew.kickoff(inputs={'issue_text': issue_text})
-    
-    return jsonify({
-        "status": "success", 
-        "output": str(result)
-    })
+# Find /report in bottom_part
+report_idx = bottom_part.find('@app.route("/report"')
+bottom_report = bottom_part[report_idx + len('@app.route("/report", methods=["POST"])'):]
 
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+new_app_content = top_imports + new_routes + bottom_report
+
+with open('app.py', 'w', encoding='utf-8') as f:
+    f.write(new_app_content)
+
+print("Updated app.py with new routes and settings logic.")

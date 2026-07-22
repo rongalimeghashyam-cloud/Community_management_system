@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="content">
+    <div class="page-header">
+        <div class="page-title">
+            <h1>Security Logs</h1>
+            <p>Recent alerts and automated security reports.</p>
+        </div>
+    </div>
+    <div class="activity-card" style="padding: 20px;">
+        <div class="activity-list">
+            {% for log in security_logs %}
+            <div class="activity-item">
+                <div class="activity-icon" style="{% if log.level == 'Warning' %}background: #FEF3C7; color: #D97706;{% elif log.level == 'Critical' %}background: #FEE2E2; color: #DC2626;{% else %}background: #E2E8F0; color: #475569;{% endif %}">
+                    <i class="ph ph-shield-{% if log.level == 'Critical' %}warning{% else %}check{% endif %}"></i>
+                </div>
+                <div class="activity-content">
+                    <p><strong>{{ log.event }}</strong></p>
+                    <div class="activity-meta">{{ log.time }} • {{ log.location }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

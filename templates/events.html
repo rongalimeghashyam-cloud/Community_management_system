@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="content">
+    <div class="page-header">
+        <div class="page-title">
+            <h1>Community Events</h1>
+            <p>Upcoming activities and facility bookings.</p>
+        </div>
+        <button class="btn-export" onclick="alert('Scheduling event...')">
+            <i class="ph ph-calendar-plus"></i> Schedule Event
+        </button>
+    </div>
+    <div class="stats-grid">
+        {% for event in events %}
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon icon-indigo"><i class="ph-fill ph-calendar-star"></i></div>
+                <span class="stat-badge badge-blue">{{ event.date }}</span>
+            </div>
+            <div style="margin-top: 12px;">
+                <div class="stat-title" style="color: var(--text-main); font-weight: 600; font-size: 16px;">{{ event.title }}</div>
+                <div class="stat-value" style="font-size: 14px; color: var(--text-muted); font-weight: 400; margin-top: 4px;">{{ event.location }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
