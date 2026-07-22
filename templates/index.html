@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resident Admin - Greenwood Village</title>
+    <!-- Import Google Fonts API -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Load Phosphor Icons for modern sleek icons like the screenshot -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <style>
+        :root {
+            /* Colors matching the design */
+            --bg-color: #F4F7FE;
+            --sidebar-color: #FFFFFF;
+            --text-main: #1E293B;
+            --text-muted: #64748B;
+            --accent-blue: #2563EB;
+            --accent-blue-hover: #1D4ED8;
+            --light-blue: #EFF6FF;
+            --border-color: #E2E8F0;
+            --card-bg: #FFFFFF;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR STYLES */
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-color);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+            flex: 0 0 auto;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 8px 32px 8px;
+        }
+
+        .brand-icon {
+            width: 32px;
+            height: 32px;
+            background-color: var(--bg-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-blue);
+            font-size: 20px;
+        }
+
+        .brand-text h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent-blue);
+        }
+
+        .brand-text p {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+        }
+
+        .nav-item.active {
+            background-color: var(--accent-blue);
+            color: white;
+        }
+
+        .nav-item i {
+            font-size: 20px;
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 24px 0;
+        }
+
+        .btn-broadcast {
+            background-color: #0F172A;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 24px;
+            transition: opacity 0.2s;
+        }
+
+        .btn-broadcast:hover {
+            opacity: 0.9;
+        }
+
+        .bottom-links {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* MAIN CONTENT AREA */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        /* HEADER */
+        .header {
+            height: 72px;
+            background-color: var(--sidebar-color);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .search-container {
+            position: relative;
+            width: 400px;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 10px 16px 10px 42px;
+            background-color: var(--bg-color);
+            border: 1px solid transparent;
+            border-radius: 20px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .search-bar:focus {
+            border-color: var(--accent-blue);
+            background-color: white;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .icon-btn:hover {
+            color: var(--text-main);
+        }
+
+        .notification-dot {
+            position: absolute;
+            top: 2px;
+            right: 4px;
+            width: 6px;
+            height: 6px;
+            background-color: #EF4444;
+            border-radius: 50%;
+        }
+
+        .profile-pic {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+
+        /* CONTENT */
+        .content {
+            padding: 32px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 32px;
+        }
+
+        .page-title h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .page-title p {
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        .btn-export {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            padding: 10px 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            color: var(--text-main);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        /* STAT CARDS */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .icon-blue { background-color: #DBEAFE; color: #2563EB; }
+        .icon-red { background-color: #FEE2E2; color: #DC2626; }
+        .icon-indigo { background-color: #E0E7FF; color: #4F46E5; }
+
+        .stat-badge {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+
+        .badge-blue { background-color: #DBEAFE; color: #1E40AF; }
+        .badge-gray { background-color: #F1F5F9; color: #475569; }
+        .badge-red { background-color: #FEE2E2; color: #991B1B; }
+        
+        .stat-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        /* MAIN LAYOUT GRID */
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+
+        /* MAP AREA */
+        .map-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .view-toggle {
+            display: flex;
+            background-color: var(--bg-color);
+            border-radius: 20px;
+            padding: 2px;
+            cursor: pointer;
+        }
+
+        .view-toggle span {
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 18px;
+        }
+
+        .view-toggle span.active {
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .map-interactive-area {
+            position: relative;
+            flex: 1;
+            min-height: 500px;
+            background-color: #FAFAFA;
+            background-image: radial-gradient(#E2E8F0 1px, transparent 1px);
+            background-size: 40px 40px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+        
+        .map-item {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            width: 200px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-left: 20px;
+            cursor: pointer;
+        }
+
+        .map-item-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background-color: var(--bg-color);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: var(--accent-blue);
+        }
+        .progress-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .progress-text::before {
+            content: '';
+            display: block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--accent-blue);
+        }
+
+        /* RIGHT SIDEBAR */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* QUICK ACTIONS */
+        .quick-actions-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .action-btn {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+        }
+
+        .action-btn i {
+            font-size: 24px;
+            color: var(--text-main);
+        }
+        
+        .action-btn:first-child i, .action-btn:first-child {
+            color: var(--accent-blue);
+        }
+
+        .action-btn span {
+            font-size: 13px;
+            font-weight: 500;
+            text-align: center;
+        }
+
+        /* RECENT ACTIVITY */
+        .activity-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .activity-list {
+            padding: 0 20px 20px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .activity-item {
+            display: flex;
+            gap: 16px;
+        }
+
+        .activity-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+            color: white;
+            background-color: var(--accent-blue);
+        }
+        
+        .activity-content p {
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 4px;
+        }
+        
+        .activity-content p strong {
+            font-weight: 600;
+        }
+
+        .activity-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Add complaint modal (Hidden by default) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 12px;
+            width: 450px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .modal-content h3 { margin-bottom: 16px; }
+        .modal-content textarea {
+            width: 100%;
+            height: 120px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            resize: none;
+        }
+        .modal-btn {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        #resultBox { margin-top: 16px; font-size: 13px; color: var(--text-muted); background: var(--bg-color); padding: 12px; border-radius: 6px; display: none; white-space: pre-wrap;}
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">
+                <i class="ph-fill ph-buildings"></i>
+            </div>
+            <div class="brand-text">
+                <h2>Resident ...</h2>
+                <p>Greenwood Village</p>
+            </div>
+        </div>
+
+        <nav class="nav-links">
+            <a href="#" class="nav-item active"><i class="ph ph-squares-four"></i> Overview</a>
+            <a href="#" class="nav-item"><i class="ph ph-users"></i> Residents</a>
+            <a href="#" class="nav-item"><i class="ph ph-wrench"></i> Maintenance</a>
+            <a href="#" class="nav-item"><i class="ph ph-calendar-blank"></i> Events</a>
+            <a href="#" class="nav-item"><i class="ph ph-shield-check"></i> Security</a>
+            <a href="#" class="nav-item"><i class="ph ph-gear"></i> Settings</a>
+        </nav>
+
+        <div class="sidebar-divider"></div>
+
+        <button class="btn-broadcast" onclick="document.getElementById('complaintModal').style.display='flex'">
+            <i class="ph ph-megaphone"></i> Run AI Analysis
+        </button>
+
+        <div class="bottom-links">
+            <a href="#" class="nav-item"><i class="ph ph-question"></i> Support</a>
+            <a href="#" class="nav-item"><i class="ph ph-sign-out"></i> Sign Out</a>
+        </div>
+    </aside>
+
+    <!-- CONTENT WRAPPER -->
+    <main class="main-wrapper">
+        
+        <!-- HEADER -->
+        <header class="header">
+            <div class="search-container">
+                <i class="ph ph-magnifying-glass"></i>
+                <input type="text" class="search-bar" placeholder="Search residents, units, or tickets...">
+            </div>
+            <div class="header-actions">
+                <button class="icon-btn">
+                    <i class="ph ph-bell"></i>
+                    <span class="notification-dot"></span>
+                </button>
+                <button class="icon-btn"><i class="ph ph-question-mark"></i></button>
+                <button class="icon-btn"><i class="ph ph-dots-nine"></i></button>
+                <img src="https://i.pravatar.cc/150?img=5" alt="Profile" class="profile-pic">
+            </div>
+        </header>
+
+        <!-- DASHBOARD CONTENT -->
+        <div class="content">
+            
+            <div class="page-header">
+                <div class="page-title">
+                    <h1>Good morning, Sarah.</h1>
+                    <p>Here's what's happening in Greenwood Village today.</p>
+                </div>
+                <button class="btn-export">
+                    <i class="ph ph-download-simple"></i> Export Report
+                </button>
+            </div>
+
+            <!-- STATS -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon icon-blue"><i class="ph-fill ph-users-three"></i></div>
+                        <span class="stat-badge badge-blue">↑ 2.4%</span>
+                    </div>
+                    <div>
+                        <div class="stat-title">Total Residents</div>
+                        <div class="stat-value">1,428</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon icon-red" style="background:#FEF2F2; color:#DC2626;"><i class="ph-fill ph-wrench"></i></div>
+                        <span class="stat-badge badge-gray">— 0%</span>
+                    </div>
+                    <div>
+                        <div class="stat-title">Open Maintenance Requests</div>
+                        <div class="stat-value">24</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon icon-indigo"><i class="ph-fill ph-calendar-check"></i></div>
+                        <span class="stat-badge badge-blue">Next: Tomorrow</span>
+                    </div>
+                    <div>
+                        <div class="stat-title">Upcoming Events</div>
+                        <div class="stat-value">3</div>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-icon icon-red"><i class="ph-fill ph-shield-warning"></i></div>
+                        <span class="stat-badge badge-red">Action Req.</span>
+                    </div>
+                    <div>
+                        <div class="stat-title">Security Alerts</div>
+                        <div class="stat-value">1</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MAIN GRID -->
+            <div class="bottom-grid">
+                
+                <!-- MAP/OVERVIEW -->
+                <div class="map-card">
+                    <div class="card-header">
+                        <h3>Community Overview</h3>
+                        <div class="view-toggle">
+                            <span class="active">Village View</span>
+                            <span>Building View</span>
+                        </div>
+                    </div>
+                    <div class="map-interactive-area">
+                        <!-- Simulated map building blocks -->
+                        <div class="map-item">
+                            <div class="map-item-title">
+                                <span>Building A</span>
+                                <i class="ph ph-arrow-square-out" style="color:var(--text-muted)"></i>
+                            </div>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 90%;"></div></div>
+                            <div class="progress-text">45/50</div>
+                        </div>
+
+                        <div class="map-item" style="margin-left: 200px;">
+                            <div class="map-item-title">
+                                <span>Building B (Tower)</span>
+                                <i class="ph ph-arrow-square-out" style="color:var(--text-muted)"></i>
+                            </div>
+                            <div class="stat-badge badge-red" style="display:inline-block; margin-bottom:12px; font-size:10px;"><i class="ph-fill ph-wrench"></i> Maintenance Req (2)</div>
+                            <div class="progress-bar"><div class="progress-fill" style="width: 75%;"></div></div>
+                            <div class="progress-text">75/100</div>
+                        </div>
+                        
+                        <div class="map-item" style="background:#E0E7FF; border-color:#C7D2FE; text-align:center; padding: 24px; margin-left: 60px;">
+                            <i class="ph-fill ph-swimming-pool" style="font-size:32px; color:#3730A3;"></i>
+                            <div style="font-weight:600; color:#312E81; margin-top:8px;">Rec Center</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT SIDEBAR ELEMENTS -->
+                <div class="right-column">
+                    
+                    <!-- QUICK ACTIONS -->
+                    <div class="quick-actions-card">
+                        <h3 style="font-size:18px; font-weight:600;">Quick Actions</h3>
+                        <div class="action-grid">
+                            <div class="action-btn" onclick="document.getElementById('complaintModal').style.display='flex'">
+                                <i class="ph ph-megaphone"></i>
+                                <span>Run AI<br>Analysis</span>
+                            </div>
+                            <div class="action-btn">
+                                <i class="ph ph-wrench"></i>
+                                <span>Schedule<br>Maint.</span>
+                            </div>
+                            <div class="action-btn">
+                                <i class="ph ph-user-plus"></i>
+                                <span>Add<br>Resident</span>
+                            </div>
+                            <div class="action-btn">
+                                <i class="ph ph-money"></i>
+                                <span>Record<br>Payment</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RECENT ACTIVITY -->
+                    <div class="activity-card">
+                        <div class="card-header" style="border:none;">
+                            <h3>Recent Activity</h3>
+                            <a href="#" style="font-size:13px; color:var(--accent-blue); text-decoration:none; font-weight:600;">View All</a>
+                        </div>
+                        <div class="activity-list">
+                            <div class="activity-item">
+                                <div class="activity-icon"><i class="ph ph-wrench"></i></div>
+                                <div class="activity-content">
+                                    <p><strong>Plumbing issue</strong> reported in Bldg B, Unit 402.</p>
+                                    <div class="activity-meta">10 mins ago • High Priority</div>
+                                </div>
+                            </div>
+
+                            <div class="activity-item">
+                                <div class="activity-icon" style="background:none; overflow:hidden;"><img src="https://i.pravatar.cc/150?img=11" style="width:100%; height:100%;"></div>
+                                <div class="activity-content">
+                                    <p><strong>Mark J.</strong> signed lease agreement for Unit 110.</p>
+                                    <div class="activity-meta">2 hours ago • New Resident</div>
+                                </div>
+                            </div>
+
+                            <div class="activity-item">
+                                <div class="activity-icon" style="background:#E0E7FF; color:#4F46E5;"><i class="ph ph-confetti"></i></div>
+                                <div class="activity-content">
+                                    <p><strong>Summer BBQ Event</strong> confirmed for next Saturday.</p>
+                                    <div class="activity-meta">Yesterday • Community Event</div>
+                                </div>
+                            </div>
+                            
+                            <div class="activity-item">
+                                <div class="activity-icon" style="background:#E2E8F0; color:#475569;"><i class="ph ph-check-circle"></i></div>
+                                <div class="activity-content">
+                                    <p>Monthly maintenance check completed for <strong>Bldg A</strong>.</p>
+                                    <div class="activity-meta">Yesterday • Routine</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for CrewAI Processing -->
+    <div class="modal" id="complaintModal">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h3>AI Complaint Assistant</h3>
+                <i class="ph ph-x" style="cursor:pointer;" onclick="document.getElementById('complaintModal').style.display='none'"></i>
+            </div>
+            <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Type a resident complaint below and our AI Agents will categorize and validate it against the database.</p>
+            <textarea id="issueText" placeholder="e.g. There's a massive pothole in front of building A..."></textarea>
+            <button class="modal-btn" onclick="submitIssue()" id="submitBtn">Run AI Agents</button>
+            <div id="resultBox"></div>
+        </div>
+    </div>
+
+    <!-- JS for calling the Flask API -->
+    <script>
+        async function submitIssue() {
+            const btn = document.getElementById('submitBtn');
+            const resultBox = document.getElementById('resultBox');
+            const issue_text = document.getElementById('issueText').value;
+            
+            if(!issue_text.trim()) return;
+
+            btn.innerText = "Agents are thinking...";
+            btn.style.opacity = 0.7;
+            resultBox.style.display = "none";
+
+            try {
+                const response = await fetch('/report', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ issue_text: issue_text })
+                });
+                
+                const data = await response.json();
+                resultBox.style.display = "block";
+                resultBox.innerText = data.output || data.error || "An error occurred.";
+            } catch (err) {
+                resultBox.style.display = "block";
+                resultBox.innerText = "Network Error.";
+            } finally {
+                btn.innerText = "Run AI Agents";
+                btn.style.opacity = 1;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 import os
 import yaml
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from crewai import Agent, Task, Crew, Process
 from crewai import LLM
 from tools import check_database_for_duplicates
@@ -56,7 +56,7 @@ def get_crew():
 
 @app.route("/", methods=["GET"])
 def home():
-    return jsonify({"status": "running", "message": "CrewAI Community System is active. Send POST to /report"})
+    return render_template("index.html")
 
 @app.route("/report", methods=["POST"])
 def process_report():
