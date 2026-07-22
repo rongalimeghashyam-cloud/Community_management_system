@@ -1,13 +1,21 @@
+import os
 import yaml
 from crewai import Agent, Task, Crew, Process
 from crewai import LLM
 from tools import check_database_for_duplicates
 
-# Connect directly to your local Ollama server running in the background
-local_llm = LLM(
-    model="ollama/llama3.2",
-    base_url="http://localhost:11434"
-)
+# Use Cloud-hosted Llama (Groq) when on Render, else use local Ollama
+if os.environ.get("RENDER"):
+    local_llm = LLM(
+        model="groq/llama-3.1-8b-instant",
+        api_key=os.environ.get("GROQ_API_KEY")
+    )
+else:
+    # Connect directly to your local Ollama server running in the background
+    local_llm = LLM(
+        model="ollama/llama3.2",
+        base_url="http://localhost:11434"
+    )
 
 def load_yaml(path):
     with open(path, 'r') as file:
