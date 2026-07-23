@@ -17,3 +17,15 @@ task_validation:
   expected_output: >-
     A validation report specifying if the issue is a duplicate, along with any existing ticket IDs found.
   agent: validation_agent
+
+task_create_ticket:
+  description: >-
+    Review the validation report. If the issue is marked as UNIQUE, you MUST use the 
+    'raise_ticket' tool to log it into the system. Determine whether it belongs in 
+    'maintenance' or 'security'. Extract the location and set an appropriate priority 
+    (High, Medium, Low for maintenance OR Critical, Warning, Info for security). 
+    If the issue is DUPLICATE, just return that no new ticket was created.
+  expected_output: >-
+    A final message confirming if a ticket was created, including the Ticket ID and department, 
+    or an explanation of why it was a duplicate.
+  agent: ticketing_agent

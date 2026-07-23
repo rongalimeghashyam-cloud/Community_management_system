@@ -1,0 +1,12 @@
+{
+    "maintenance": [
+        {"id": "1024", "title": "Massive pothole on Main Street", "location": "Main Street", "date": "Today, 08:30 AM", "priority": "High", "status": "Open"},
+        {"id": "0988", "title": "Trash missed collection", "location": "Elm St", "date": "Yesterday", "priority": "Low", "status": "Resolved"},
+        {"id": "1025", "title": "Leaking pipe in basement", "location": "Bldg B", "date": "Today, 10:15 AM", "priority": "High", "status": "Open"}
+    ],
+    "security": [
+        {"id": "S101", "event": "Unauthorized vehicle at Gate B", "time": "10 mins ago", "location": "Gate B", "level": "Warning"},
+        {"id": "S102", "event": "Camera offline in Parking C", "time": "1 hour ago", "location": "Parking C", "level": "Critical"},
+        {"id": "S103", "event": "Routine patrol completed", "time": "2 hours ago", "location": "All areas", "level": "Info"}
+    ]
+}

@@ -7,7 +7,7 @@
                     <h1>Good morning, Sarah.</h1>
                     <p>Here's what's happening in Greenwood Village today.</p>
                 </div>
-                <button class="btn-export" onclick="alert('Exporting report...')">
+                <button class="btn-export" onclick="window.print()">
                     <i class="ph ph-download-simple"></i> Export Report
                 </button>
             </div>
@@ -110,18 +110,18 @@
                                 <i class="ph ph-megaphone"></i>
                                 <span>Run AI<br>Analysis</span>
                             </div>
-                            <div class="action-btn" onclick="alert('Schedule Maintenance feature coming soon!')">
+                            <div class="action-btn" onclick="document.getElementById('complaintModal').style.display='flex'">
                                 <i class="ph ph-wrench"></i>
                                 <span>Schedule<br>Maint.</span>
                             </div>
-                            <div class="action-btn" onclick="alert('Add Resident feature coming soon!')">
+                            <a href="{{ url_for('residents') }}" class="action-btn" style="text-decoration: none; color: inherit;">
                                 <i class="ph ph-user-plus"></i>
                                 <span>Add<br>Resident</span>
-                            </div>
-                            <div class="action-btn" onclick="alert('Record Payment feature coming soon!')">
+                            </a>
+                            <a href="{{ url_for('settings') }}" class="action-btn" style="text-decoration: none; color: inherit;">
                                 <i class="ph ph-money"></i>
                                 <span>Record<br>Payment</span>
-                            </div>
+                            </a>
                         </div>
                     </div>
 
@@ -129,7 +129,7 @@
                     <div class="activity-card">
                         <div class="card-header" style="border:none;">
                             <h3>Recent Activity</h3>
-                            <a href="#" style="font-size:13px; color:var(--accent-blue); text-decoration:none; font-weight:600;">View All</a>
+                            <a href="{{ url_for('security') }}" style="font-size:13px; color:var(--accent-blue); text-decoration:none; font-weight:600;">View All</a>
                         </div>
                         <div class="activity-list">
                             <div class="activity-item">

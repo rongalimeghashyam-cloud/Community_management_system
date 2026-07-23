@@ -606,11 +606,11 @@
 
         <nav class="nav-links">
             <a class="nav-item {% if request.endpoint == 'home' %}active{% endif %}" href="{{ url_for('home') }}"><i class="ph ph-squares-four"></i> Overview</a>
-            <a href="javascript:void(0)" class="nav-item" onclick="alert('Navigating to Residents')"><i class="ph ph-users"></i> Residents</a>
-            <a href="javascript:void(0)" class="nav-item" onclick="alert('Navigating to Maintenance')"><i class="ph ph-wrench"></i> Maintenance</a>
-            <a href="javascript:void(0)" class="nav-item" onclick="alert('Navigating to Events')"><i class="ph ph-calendar-blank"></i> Events</a>
-            <a href="javascript:void(0)" class="nav-item" onclick="alert('Navigating to Security')"><i class="ph ph-shield-check"></i> Security</a>
-            <a href="javascript:void(0)" class="nav-item" onclick="alert('Navigating to Settings')"><i class="ph ph-gear"></i> Settings</a>
+            <a class="nav-item {% if request.endpoint == 'residents' %}active{% endif %}" href="{{ url_for('residents') }}"><i class="ph ph-users"></i> Residents</a>
+            <a class="nav-item {% if request.endpoint == 'maintenance' %}active{% endif %}" href="{{ url_for('maintenance') }}"><i class="ph ph-wrench"></i> Maintenance</a>
+            <a class="nav-item {% if request.endpoint == 'events' %}active{% endif %}" href="{{ url_for('events') }}"><i class="ph ph-calendar-blank"></i> Events</a>
+            <a class="nav-item {% if request.endpoint == 'security' %}active{% endif %}" href="{{ url_for('security') }}"><i class="ph ph-shield-check"></i> Security</a>
+            <a class="nav-item {% if request.endpoint == 'settings' %}active{% endif %}" href="{{ url_for('settings') }}"><i class="ph ph-gear"></i> Settings</a>
         </nav>
 
         <div class="sidebar-divider"></div>
@@ -620,8 +620,8 @@
         </button>
 
         <div class="bottom-links">
-            <a href="javascript:void(0)" class="nav-item" onclick="alert('Opening Support...')"><i class="ph ph-question"></i> Support</a>
-            <a href="javascript:void(0)" class="nav-item" onclick="alert('Signing out...')"><i class="ph ph-sign-out"></i> Sign Out</a>
+            <a href="#" class="nav-item" onclick="document.getElementById('complaintModal').style.display='flex'"><i class="ph ph-question"></i> Support</a>
+            <a href="{{ url_for('home') }}" class="nav-item"><i class="ph ph-sign-out"></i> Sign Out</a>
         </div>
     </aside>
 
@@ -635,13 +635,13 @@
                 <input type="text" class="search-bar" placeholder="Search residents, units, or tickets...">
             </div>
             <div class="header-actions">
-                <button class="icon-btn" onclick="alert('No new notifications')">
+                <button class="icon-btn" onclick="window.location.href='{{ url_for('security') }}'">
                     <i class="ph ph-bell"></i>
                     <span class="notification-dot"></span>
                 </button>
-                <button class="icon-btn" onclick="alert('Help center opened')"><i class="ph ph-question-mark"></i></button>
-                <button class="icon-btn" onclick="alert('Apps menu opened')"><i class="ph ph-dots-nine"></i></button>
-                <img src="https://i.pravatar.cc/150?img=5" alt="Profile" class="profile-pic" onclick="alert('Profile clicked')">
+                <button class="icon-btn" onclick="document.getElementById('complaintModal').style.display='flex'"><i class="ph ph-question-mark"></i></button>
+                <button class="icon-btn" onclick="window.location.href='{{ url_for('settings') }}'"><i class="ph ph-dots-nine"></i></button>
+                <img src="https://i.pravatar.cc/150?img=5" alt="Profile" class="profile-pic" onclick="window.location.href='{{ url_for('settings') }}'">
             </div>
         </header>
 
@@ -665,6 +665,7 @@
                     <option value="gemini">Gemini</option>
                     <option value="groq">Groq</option>
                     <option value="openai">OpenAI</option>
+                    <option value="ollama">Llama (Free/Local)</option>
                 </select>
                 <input type="password" id="apiKey" placeholder="API Key (optional)" style="flex:1; padding: 8px; border-radius: 8px; border: 1px solid var(--border-color);">
             </div>
