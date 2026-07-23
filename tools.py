@@ -25,8 +25,6 @@ def raise_ticket(department: str, title: str, location: str, priority: str) -> s
         location: Where it happened
         priority: 'High', 'Medium', 'Low' for maintenance; 'Critical', 'Warning', 'Info' for security
     """
-    import json
-    import os
     import time
     
     department = department.lower().strip()

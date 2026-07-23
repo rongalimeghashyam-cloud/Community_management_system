@@ -3,9 +3,8 @@ import yaml
 from flask import Flask, request, jsonify, render_template
 from crewai import Agent, Task, Crew, Process
 from crewai import LLM
-import json
 from tools import check_database_for_duplicates, raise_ticket
-from database import get_settings, save_settings, get_tickets, db
+from database import get_tickets
 
 def load_yaml(path):
     with open(path, 'r') as file:
