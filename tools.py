@@ -55,7 +55,7 @@ def raise_ticket(department: str, title: str, location: str, priority: str) -> s
             "status": "Open"
         }
         
-    from app import save_ticket
+    from database import save_ticket
     save_ticket(department, ticket_data)
         
     return f"Successfully created ticket {ticket_id} in {department} department."

@@ -698,12 +698,16 @@
                     body: JSON.stringify({ issue_text: issue_text, provider: provider, api_key: api_key })
                 });
                 
-                const data = await response.json();
                 resultBox.style.display = "block";
-                resultBox.innerText = data.output || data.error || "An error occurred.";
+                try {
+                    const data = await response.json();
+                    resultBox.innerText = data.output || data.error || "An error occurred.";
+                } catch (parseErr) {
+                    resultBox.innerText = "Server error " + response.status + ". See console for details.";
+                }
             } catch (err) {
                 resultBox.style.display = "block";
-                resultBox.innerText = "Network Error.";
+                resultBox.innerText = "Network Error: " + err.message;
             } finally {
                 btn.innerText = "Run AI Agents";
                 btn.style.opacity = 1;
