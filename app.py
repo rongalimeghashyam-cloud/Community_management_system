@@ -14,31 +14,22 @@ def load_yaml(path):
 app = Flask(__name__)
 
 
-def get_crew(provider=None, api_key=None):
+# --- HARDCODED API KEYS ---
+# Place your API keys here so users don't need to enter them in the UI.
+HARDCODED_GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
+# --------------------------
+
+def get_crew():
     agents_config = load_yaml('config/agents.yaml')
     tasks_config = load_yaml('config/tasks.yaml')
 
-    settings = get_settings()
-    
     active_llm = None
-    if provider:
-        if provider == 'gemini' and api_key:
-            active_llm = LLM(model="gemini/gemini-1.5-flash", api_key=api_key)
-        elif provider == 'groq' and api_key:
-            active_llm = LLM(model="groq/llama-3.1-8b-instant", api_key=api_key)
-        elif provider == 'openai' and api_key:
-            active_llm = LLM(model="gpt-4o-mini", api_key=api_key)
-        elif provider == 'ollama':
-            active_llm = LLM(model="ollama/llama3.2", base_url="http://localhost:11434")
+    
+    # 1. Check Hardcoded Keys
+    if HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
+        active_llm = LLM(model="gemini/gemini-1.5-flash", api_key=HARDCODED_GEMINI_API_KEY)
 
-    if not active_llm:
-        # Check settings
-        if settings.get('gemini_api_key'):
-            active_llm = LLM(model="gemini/gemini-1.5-flash", api_key=settings.get('gemini_api_key'))
-        elif settings.get('openai_api_key'):
-            active_llm = LLM(model="gpt-4o-mini", api_key=settings.get('openai_api_key'))
-
-    # Detect which API key is available in the Render Environment
+    # 2. Detect which API key is available in the Render Environment
     if not active_llm:
         if not os.environ.get("RENDER"):
             active_llm = LLM(model="ollama/llama3.2", base_url="http://localhost:11434")
@@ -49,7 +40,7 @@ def get_crew(provider=None, api_key=None):
         elif os.environ.get("OPENAI_API_KEY"):
             active_llm = LLM(model="gpt-4o-mini", api_key=os.environ.get("OPENAI_API_KEY"))
         else:
-            return None, "No API Key found! Please add GEMINI_API_KEY, GROQ_API_KEY, or OPENAI_API_KEY to Render Environment Variables, or provide one in the interface."
+            return None, "No API Key found! Please add GEMINI_API_KEY to Render Environment Variables, or hardcode it in app.py."
 
     triage_agent = Agent(
         config=agents_config['triage_agent'],
@@ -91,11 +82,8 @@ def get_crew(provider=None, api_key=None):
 
 @app.route("/", methods=["GET"])
 def home():
-    settings = get_settings()
-    if settings.get('gemini_api_key'):
-        llm_name = "Google Gemini 1.5 Flash (Settings)"
-    elif settings.get('openai_api_key'):
-        llm_name = "OpenAI GPT-4o-mini (Settings)"
+    if HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
+        llm_name = "Google Gemini 1.5 Flash (Hardcoded)"
     elif os.environ.get("GEMINI_API_KEY"):
         llm_name = "Google Gemini 1.5 Flash"
     elif os.environ.get("GROQ_API_KEY"):
@@ -138,29 +126,17 @@ def security():
     security_logs = get_tickets().get("security", [])
     return render_template("security.html", security_logs=security_logs)
 
-@app.route("/settings", methods=["GET", "POST"])
-def settings():
-    success_msg = None
-    if request.method == "POST":
-        gemini = request.form.get("gemini_api_key")
-        openai = request.form.get("openai_api_key")
-        save_settings({"gemini_api_key": gemini, "openai_api_key": openai})
-        success_msg = "Settings saved successfully!"
-        
-    current_settings = get_settings()
-    return render_template("settings.html", settings=current_settings, success_msg=success_msg)
+
 
 @app.route("/report", methods=["POST"])
-
 def process_report():
     data = request.json or {}
     issue_text = data.get("issue_text", "")
-    provider = data.get("provider")
-    api_key = data.get("api_key")
+    
     if not issue_text:
         return jsonify({"error": "No issue_text provided in the request body"}), 400
         
-    community_crew, error_msg = get_crew(provider, api_key)
+    community_crew, error_msg = get_crew()
     if error_msg:
         return jsonify({"error": error_msg}), 500
 
