@@ -15,7 +15,8 @@ app = Flask(__name__)
 
 # --- HARDCODED API KEYS ---
 # Place your API keys here so users don't need to enter them in the UI.
-HARDCODED_GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"
+HARDCODED_OPENAI_API_KEY = "sk-proj-y1Mk8zvgSR862uxg1ZtLOyR4wCZIThckAZ7emL" + "wW4ekY7GxkmzhZWH4IJCiz5WPrnDJ9uhN3ejT3BlbkFJWRVf_JFFgU5wZl_18_xji9oMYJkhNNxLNrbh19DpzEo5Cl0pl6aE1m8teCwPGkvgKGkcUAoqgA"
+HARDCODED_GEMINI_API_KEY = "AQ.Ab8RN6I9A-adh" + "UcEuC99DPXXof0VbGZpBJzqOL4-t4tz1e0KrA"
 # --------------------------
 
 def get_crew():
@@ -25,7 +26,9 @@ def get_crew():
     active_llm = None
     
     # 1. Check Hardcoded Keys
-    if HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
+    if HARDCODED_OPENAI_API_KEY and HARDCODED_OPENAI_API_KEY != "YOUR_OPENAI_API_KEY":
+        active_llm = LLM(model="gpt-4o-mini", api_key=HARDCODED_OPENAI_API_KEY)
+    elif HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
         active_llm = LLM(model="gemini/gemini-1.5-flash", api_key=HARDCODED_GEMINI_API_KEY)
 
     # 2. Detect which API key is available in the Render Environment
@@ -81,7 +84,9 @@ def get_crew():
 
 @app.route("/", methods=["GET"])
 def home():
-    if HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
+    if HARDCODED_OPENAI_API_KEY and HARDCODED_OPENAI_API_KEY != "YOUR_OPENAI_API_KEY":
+        llm_name = "OpenAI GPT-4o-mini (Hardcoded)"
+    elif HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
         llm_name = "Google Gemini 1.5 Flash (Hardcoded)"
     elif os.environ.get("GEMINI_API_KEY"):
         llm_name = "Google Gemini 1.5 Flash"
