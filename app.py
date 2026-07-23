@@ -32,7 +32,7 @@ def get_crew():
         active_llm = LLM(model="gemini/gemini-1.5-flash", api_key=HARDCODED_GEMINI_API_KEY)
 
     # 2. Detect which API key is available in the Render Environment
-    if not active_llm:
+    if active_llm is None:
         if not os.environ.get("RENDER"):
             active_llm = LLM(model="ollama/llama3.2", base_url="http://localhost:11434")
         elif os.environ.get("GEMINI_API_KEY"):
