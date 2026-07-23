@@ -27,7 +27,7 @@ def get_crew():
     
     # 1. Use Hardcoded Keys directly
     if HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
-        active_llm = LLM(model="gemini/gemini-3.5-flash", api_key=HARDCODED_GEMINI_API_KEY)
+        active_llm = LLM(model="gemini/gemini-2.5-pro", api_key=HARDCODED_GEMINI_API_KEY)
     elif HARDCODED_OPENAI_API_KEY and HARDCODED_OPENAI_API_KEY != "YOUR_OPENAI_API_KEY":
         active_llm = LLM(model="gpt-4o-mini", api_key=HARDCODED_OPENAI_API_KEY)
     else:
@@ -74,7 +74,7 @@ def get_crew():
 @app.route("/", methods=["GET"])
 def home():
     if HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
-        llm_name = "Google Gemini 3.5 Flash (Hardcoded)"
+        llm_name = "Google Gemini 2.5 Pro (Hardcoded)"
     elif HARDCODED_OPENAI_API_KEY and HARDCODED_OPENAI_API_KEY != "YOUR_OPENAI_API_KEY":
         llm_name = "OpenAI GPT-4o-mini (Hardcoded)"
     else:
