@@ -27,7 +27,7 @@ def get_crew(selected_model="gemini"):
     
     if selected_model == "gemini":
         if HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
-            active_llm = LLM(model="gemini/gemini-2.5-pro", api_key=HARDCODED_GEMINI_API_KEY)
+            active_llm = LLM(model="gemini/gemini-3.5-flash", api_key=HARDCODED_GEMINI_API_KEY)
         else:
             return None, "Gemini API Key not configured."
     elif selected_model == "openai":
@@ -40,7 +40,7 @@ def get_crew(selected_model="gemini"):
         if groq_key:
             active_llm = LLM(model="groq/llama-3.1-8b-instant", api_key=groq_key)
         else:
-            active_llm = LLM(model="ollama/llama3.2", base_url="http://localhost:11434")
+            active_llm = LLM(model="ollama/llama3.2:1b", base_url="http://localhost:11434")
 
     if active_llm is None:
         return None, f"Failed to initialize the {selected_model} model. Please check the backend configuration."
@@ -86,7 +86,7 @@ def get_crew(selected_model="gemini"):
 @app.route("/", methods=["GET"])
 def home():
     if HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
-        llm_name = "Google Gemini 2.5 Pro (Hardcoded)"
+        llm_name = "Google Gemini 3.5 Flash (Hardcoded)"
     elif HARDCODED_OPENAI_API_KEY and HARDCODED_OPENAI_API_KEY != "YOUR_OPENAI_API_KEY":
         llm_name = "OpenAI GPT-4o-mini (Hardcoded)"
     else:
