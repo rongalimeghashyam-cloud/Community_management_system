@@ -25,24 +25,13 @@ def get_crew():
 
     active_llm = None
     
-    # 1. Check Hardcoded Keys
-    if HARDCODED_OPENAI_API_KEY and HARDCODED_OPENAI_API_KEY != "YOUR_OPENAI_API_KEY":
-        active_llm = LLM(model="gpt-4o-mini", api_key=HARDCODED_OPENAI_API_KEY)
-    elif HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
+    # 1. Use Hardcoded Keys directly
+    if HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
         active_llm = LLM(model="gemini/gemini-1.5-flash", api_key=HARDCODED_GEMINI_API_KEY)
-
-    # 2. Detect which API key is available in the Render Environment
-    if active_llm is None:
-        if not os.environ.get("RENDER"):
-            active_llm = LLM(model="ollama/llama3.2", base_url="http://localhost:11434")
-        elif os.environ.get("GEMINI_API_KEY"):
-            active_llm = LLM(model="gemini/gemini-1.5-flash", api_key=os.environ.get("GEMINI_API_KEY"))
-        elif os.environ.get("GROQ_API_KEY"):
-            active_llm = LLM(model="groq/llama-3.1-8b-instant", api_key=os.environ.get("GROQ_API_KEY"))
-        elif os.environ.get("OPENAI_API_KEY"):
-            active_llm = LLM(model="gpt-4o-mini", api_key=os.environ.get("OPENAI_API_KEY"))
-        else:
-            return None, "No API Key found! Please add GEMINI_API_KEY to Render Environment Variables, or hardcode it in app.py."
+    elif HARDCODED_OPENAI_API_KEY and HARDCODED_OPENAI_API_KEY != "YOUR_OPENAI_API_KEY":
+        active_llm = LLM(model="gpt-4o-mini", api_key=HARDCODED_OPENAI_API_KEY)
+    else:
+        return None, "No API Key found! Please add your key to app.py."
 
     triage_agent = Agent(
         config=agents_config['triage_agent'],
@@ -84,18 +73,10 @@ def get_crew():
 
 @app.route("/", methods=["GET"])
 def home():
-    if HARDCODED_OPENAI_API_KEY and HARDCODED_OPENAI_API_KEY != "YOUR_OPENAI_API_KEY":
-        llm_name = "OpenAI GPT-4o-mini (Hardcoded)"
-    elif HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
+    if HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
         llm_name = "Google Gemini 1.5 Flash (Hardcoded)"
-    elif os.environ.get("GEMINI_API_KEY"):
-        llm_name = "Google Gemini 1.5 Flash"
-    elif os.environ.get("GROQ_API_KEY"):
-        llm_name = "Meta Llama-3.1 (via Groq)"
-    elif os.environ.get("OPENAI_API_KEY"):
-        llm_name = "OpenAI GPT-4o-mini"
-    elif not os.environ.get("RENDER"):
-        llm_name = "Local Ollama Llama 3.2"
+    elif HARDCODED_OPENAI_API_KEY and HARDCODED_OPENAI_API_KEY != "YOUR_OPENAI_API_KEY":
+        llm_name = "OpenAI GPT-4o-mini (Hardcoded)"
     else:
         llm_name = "No Cloud LLM Configured"
         
@@ -161,5 +142,5 @@ def process_report():
         }), 500
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 5001))
     app.run(host="0.0.0.0", port=port)
