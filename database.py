@@ -20,7 +20,13 @@ def save_settings(new_settings):
 
 db = None
 try:
-    cred = credentials.Certificate('config/firebase-credentials.json')
+    if os.environ.get("FIREBASE_CREDENTIALS"):
+        import json
+        cred_dict = json.loads(os.environ.get("FIREBASE_CREDENTIALS"))
+        cred = credentials.Certificate(cred_dict)
+    else:
+        cred = credentials.Certificate('config/firebase-credentials.json')
+        
     if not firebase_admin._apps:
         firebase_admin.initialize_app(cred)
     db = firestore.client()

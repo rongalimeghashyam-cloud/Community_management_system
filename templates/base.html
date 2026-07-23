@@ -599,7 +599,7 @@
                 <i class="ph-fill ph-buildings"></i>
             </div>
             <div class="brand-text">
-                <h2>Resident ...</h2>
+                <h2>Resident Hub</h2>
                 <p>Greenwood Village</p>
             </div>
         </div>
@@ -639,7 +639,10 @@
                     <span class="notification-dot"></span>
                 </button>
                 <button class="icon-btn" onclick="document.getElementById('complaintModal').style.display='flex'"><i class="ph ph-question-mark"></i></button>
-                <img src="https://i.pravatar.cc/150?img=5" alt="Profile" class="profile-pic">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="https://i.pravatar.cc/150?img=5" alt="Profile" class="profile-pic">
+                    <span style="font-weight: 600; font-size: 14px; color: var(--text-main);">Rongali Meghashyam</span>
+                </div>
             </div>
         </header>
 
@@ -657,6 +660,14 @@
             </div>
             <p style="font-size:13px; color:var(--text-muted); margin-bottom:12px;">Type a resident complaint below and our AI Agents will categorize and validate it.</p>
 
+            <label style="font-size:12px; font-weight:600; margin-bottom:4px; display:block;">Select AI Intelligence Level</label>
+            <select id="aiModelSelect" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 16px; font-size: 14px; background: #fff;">
+                <option value="gemini">Google Gemini 2.5 Pro (Enterprise)</option>
+                <option value="openai">OpenAI GPT-4o-Mini (Fast)</option>
+                <option value="llama">Meta Llama 3.1 (Local / Groq)</option>
+            </select>
+            
+            <label style="font-size:12px; font-weight:600; margin-bottom:4px; display:block;">Citizen Issue Description</label>
             <textarea id="issueText" placeholder="e.g. There's a massive pothole in front of building A..."></textarea>
             <button class="modal-btn" onclick="submitIssue()" id="submitBtn">Run AI Agents</button>
             <div id="resultBox"></div>
@@ -669,10 +680,11 @@
             const btn = document.getElementById('submitBtn');
             const resultBox = document.getElementById('resultBox');
             const issue_text = document.getElementById('issueText').value;
+            const model = document.getElementById('aiModelSelect').value;
             
             if(!issue_text.trim()) return;
 
-            btn.innerText = "Agents are thinking...";
+            btn.innerText = "Agents are thinking (Tracing via " + model + ")...";
             btn.style.opacity = 0.7;
             resultBox.style.display = "none";
 
@@ -680,7 +692,7 @@
                 const response = await fetch('/report', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ issue_text: issue_text })
+                    body: JSON.stringify({ issue_text: issue_text, model: model })
                 });
                 
                 resultBox.style.display = "block";

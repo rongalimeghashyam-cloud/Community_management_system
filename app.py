@@ -19,19 +19,31 @@ HARDCODED_OPENAI_API_KEY = "sk-proj-y1Mk8zvgSR862uxg1ZtLOyR4wCZIThckAZ7emL" + "w
 HARDCODED_GEMINI_API_KEY = "AQ.Ab8RN6I9A-adh" + "UcEuC99DPXXof0VbGZpBJzqOL4-t4tz1e0KrA"
 # --------------------------
 
-def get_crew():
+def get_crew(selected_model="gemini"):
     agents_config = load_yaml('config/agents.yaml')
     tasks_config = load_yaml('config/tasks.yaml')
 
     active_llm = None
     
-    # 1. Use Hardcoded Keys directly
-    if HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
-        active_llm = LLM(model="gemini/gemini-2.5-pro", api_key=HARDCODED_GEMINI_API_KEY)
-    elif HARDCODED_OPENAI_API_KEY and HARDCODED_OPENAI_API_KEY != "YOUR_OPENAI_API_KEY":
-        active_llm = LLM(model="gpt-4o-mini", api_key=HARDCODED_OPENAI_API_KEY)
-    else:
-        return None, "No API Key found! Please add your key to app.py."
+    if selected_model == "gemini":
+        if HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
+            active_llm = LLM(model="gemini/gemini-2.5-pro", api_key=HARDCODED_GEMINI_API_KEY)
+        else:
+            return None, "Gemini API Key not configured."
+    elif selected_model == "openai":
+        if HARDCODED_OPENAI_API_KEY and HARDCODED_OPENAI_API_KEY != "YOUR_OPENAI_API_KEY":
+            active_llm = LLM(model="gpt-4o-mini", api_key=HARDCODED_OPENAI_API_KEY)
+        else:
+            return None, "OpenAI API Key not configured."
+    elif selected_model == "llama":
+        groq_key = os.environ.get("GROQ_API_KEY")
+        if groq_key:
+            active_llm = LLM(model="groq/llama-3.1-8b-instant", api_key=groq_key)
+        else:
+            active_llm = LLM(model="ollama/llama3.2", base_url="http://localhost:11434")
+
+    if active_llm is None:
+        return None, f"Failed to initialize the {selected_model} model. Please check the backend configuration."
 
     triage_agent = Agent(
         config=agents_config['triage_agent'],
@@ -117,21 +129,31 @@ def security():
 def process_report():
     data = request.json or {}
     issue_text = data.get("issue_text", "")
+    selected_model = data.get("model", "gemini")
     
     if not issue_text:
         return jsonify({"error": "No issue_text provided in the request body"}), 400
         
-    community_crew, error_msg = get_crew()
+    community_crew, error_msg = get_crew(selected_model)
     if error_msg:
         return jsonify({"error": error_msg}), 500
 
     try:
-        print(f"\n[!] Instructing Crew to process issue: {issue_text}\n")
+        print(f"\n[!] Instructing Crew to process issue with model {selected_model}: {issue_text}\n")
         result = community_crew.kickoff(inputs={'issue_text': issue_text})
+        
+        # Build tracking progress for the UI
+        progress_text = "### Agent Tracking Progress ###\n\n"
+        if hasattr(result, 'tasks_output'):
+            for task_output in result.tasks_output:
+                progress_text += f"[\u2714] Agent Task Completed: {task_output.description}\n"
+                progress_text += f"{task_output.raw}\n\n"
+        
+        final_output = f"{progress_text}---\n### Final Result ###\n{str(result)}"
         
         return jsonify({
             "status": "success", 
-            "output": str(result)
+            "output": final_output
         })
     except Exception as e:
         import traceback
