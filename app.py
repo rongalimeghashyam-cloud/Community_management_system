@@ -38,57 +38,64 @@ def get_local_ollama_llm():
         print(f"Ollama local connection check: {e}")
     return None
 
+def resolve_active_llm(selected_model):
+    groq_key = os.environ.get("GROQ_API_KEY")
+    gemini_key = os.environ.get("GEMINI_API_KEY")
+    openai_key = os.environ.get("OPENAI_API_KEY")
+    qwen_key = os.environ.get("DASHSCOPE_API_KEY") or os.environ.get("QWEN_API_KEY")
+
+    # Check local Ollama (works on local machine)
+    local_ollama = get_local_ollama_llm()
+    
+    if selected_model in ["local_llama", "llama"]:
+        if local_ollama:
+            return local_ollama, None
+        if groq_key:
+            return LLM(model="groq/llama-3.1-8b-instant", api_key=groq_key), None
+        if gemini_key:
+            return LLM(model="gemini/gemini-2.0-flash", api_key=gemini_key), None
+        if openai_key:
+            return LLM(model="gpt-4o-mini", api_key=openai_key), None
+
+    elif selected_model == "qwen":
+        if qwen_key:
+            return LLM(model="qwen/qwen-2.5-72b-instruct", api_key=qwen_key), None
+        if groq_key:
+            return LLM(model="groq/qwen-2.5-32b", api_key=groq_key), None
+        if local_ollama:
+            return local_ollama, None
+
+    elif selected_model == "gemini":
+        if gemini_key:
+            return LLM(model="gemini/gemini-2.0-flash", api_key=gemini_key), None
+        if local_ollama:
+            return local_ollama, None
+
+    elif selected_model == "openai":
+        if openai_key:
+            return LLM(model="gpt-4o-mini", api_key=openai_key), None
+        if local_ollama:
+            return local_ollama, None
+
+    # Global Fallback Cascade (Ollama -> Groq -> Gemini -> OpenAI)
+    if local_ollama:
+        return local_ollama, None
+    if groq_key:
+        return LLM(model="groq/llama-3.1-8b-instant", api_key=groq_key), None
+    if gemini_key:
+        return LLM(model="gemini/gemini-2.0-flash", api_key=gemini_key), None
+    if openai_key:
+        return LLM(model="gpt-4o-mini", api_key=openai_key), None
+
+    return None, "No active AI Model found on Render. Please add a free `GROQ_API_KEY` or `GEMINI_API_KEY` in Render Environment Variables."
+
 def get_crew(selected_model="local_llama"):
     agents_config = load_yaml('config/agents.yaml')
     tasks_config = load_yaml('config/tasks.yaml')
 
-    active_llm = None
-    
-    if selected_model in ["local_llama", "llama"]:
-        active_llm = get_local_ollama_llm()
-        if not active_llm:
-            groq_key = os.environ.get("GROQ_API_KEY")
-            gemini_key = os.environ.get("GEMINI_API_KEY")
-            if groq_key:
-                active_llm = LLM(model="groq/llama-3.1-8b-instant", api_key=groq_key)
-            elif gemini_key:
-                active_llm = LLM(model="gemini/gemini-2.0-flash", api_key=gemini_key)
-            else:
-                active_llm = LLM(model="ollama/llama3.2:3b", base_url="http://localhost:11434")
-    elif selected_model == "qwen":
-        qwen_key = HARDCODED_QWEN_API_KEY or os.environ.get("DASHSCOPE_API_KEY")
-        groq_key = os.environ.get("GROQ_API_KEY")
-        if qwen_key:
-            active_llm = LLM(model="qwen/qwen-2.5-72b-instruct", api_key=qwen_key)
-        elif groq_key:
-            active_llm = LLM(model="groq/qwen-2.5-32b", api_key=groq_key)
-        else:
-            active_llm = get_local_ollama_llm() or LLM(model="ollama/llama3.2:3b", base_url="http://localhost:11434")
-    elif selected_model == "gemini":
-        gemini_key = os.environ.get("GEMINI_API_KEY")
-        if gemini_key:
-            active_llm = LLM(model="gemini/gemini-2.0-flash", api_key=gemini_key)
-        elif HARDCODED_GEMINI_API_KEY and not HARDCODED_GEMINI_API_KEY.startswith("AQ."):
-            active_llm = LLM(model="gemini/gemini-3.5-flash", api_key=HARDCODED_GEMINI_API_KEY)
-        else:
-            active_llm = get_local_ollama_llm()
-    elif selected_model == "openai":
-        openai_key = os.environ.get("OPENAI_API_KEY") or HARDCODED_OPENAI_API_KEY
-        if openai_key and openai_key != "YOUR_OPENAI_API_KEY":
-            active_llm = LLM(model="gpt-4o-mini", api_key=openai_key)
-        else:
-            active_llm = get_local_ollama_llm()
-
-    if active_llm is None:
-        active_llm = get_local_ollama_llm()
-
-    if active_llm is None:
-        groq_key = os.environ.get("GROQ_API_KEY")
-        if groq_key:
-            active_llm = LLM(model="groq/llama-3.1-8b-instant", api_key=groq_key)
-
-    if active_llm is None:
-        return None, "No active AI model found. When deploying on Render, please add a free `GROQ_API_KEY` or `GEMINI_API_KEY` in Environment Variables."
+    active_llm, error_msg = resolve_active_llm(selected_model)
+    if error_msg:
+        return None, error_msg
 
     triage_agent = Agent(
         config=agents_config['triage_agent'],
@@ -140,10 +147,14 @@ def home():
     local_llm = get_local_ollama_llm()
     if local_llm:
         llm_name = f"Local Ollama Llama ({local_llm.model.replace('ollama/', '')}) [Free & Offline]"
-    elif HARDCODED_OPENAI_API_KEY and HARDCODED_OPENAI_API_KEY != "YOUR_OPENAI_API_KEY":
+    elif os.environ.get("GROQ_API_KEY"):
+        llm_name = "Groq Llama 3.1 8B (Free Cloud API)"
+    elif os.environ.get("GEMINI_API_KEY"):
+        llm_name = "Google Gemini 2.0 Flash (Free Cloud API)"
+    elif os.environ.get("OPENAI_API_KEY"):
         llm_name = "OpenAI GPT-4o-mini (Cloud)"
     else:
-        llm_name = "Local Ollama Agent"
+        llm_name = "No Cloud Key Configured on Render (Set GROQ_API_KEY)"
         
     return render_template("index.html", active_llm=llm_name)
 
