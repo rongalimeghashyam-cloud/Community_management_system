@@ -17,6 +17,7 @@ app = Flask(__name__)
 # Place your API keys here so users don't need to enter them in the UI.
 HARDCODED_OPENAI_API_KEY = "sk-proj-y1Mk8zvgSR862uxg1ZtLOyR4wCZIThckAZ7emL" + "wW4ekY7GxkmzhZWH4IJCiz5WPrnDJ9uhN3ejT3BlbkFJWRVf_JFFgU5wZl_18_xji9oMYJkhNNxLNrbh19DpzEo5Cl0pl6aE1m8teCwPGkvgKGkcUAoqgA"
 HARDCODED_GEMINI_API_KEY = "AQ.Ab8RN6I9A-adh" + "UcEuC99DPXXof0VbGZpBJzqOL4-t4tz1e0KrA"
+HARDCODED_QWEN_API_KEY = os.environ.get("QWEN_API_KEY", "")
 # --------------------------
 
 def get_crew(selected_model="gemini"):
@@ -41,6 +42,15 @@ def get_crew(selected_model="gemini"):
             active_llm = LLM(model="groq/llama-3.1-8b-instant", api_key=groq_key)
         else:
             active_llm = LLM(model="ollama/llama3.2:1b", base_url="http://localhost:11434")
+    elif selected_model == "qwen":
+        qwen_key = HARDCODED_QWEN_API_KEY or os.environ.get("DASHSCOPE_API_KEY")
+        groq_key = os.environ.get("GROQ_API_KEY")
+        if qwen_key:
+            active_llm = LLM(model="qwen/qwen-2.5-72b-instruct", api_key=qwen_key)
+        elif groq_key:
+            active_llm = LLM(model="groq/qwen-2.5-32b", api_key=groq_key)
+        else:
+            active_llm = LLM(model="ollama/qwen2.5", base_url="http://localhost:11434")
 
     if active_llm is None:
         return None, f"Failed to initialize the {selected_model} model. Please check the backend configuration."
