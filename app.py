@@ -20,28 +20,38 @@ HARDCODED_GEMINI_API_KEY = "AQ.Ab8RN6I9A-adh" + "UcEuC99DPXXof0VbGZpBJzqOL4-t4tz
 HARDCODED_QWEN_API_KEY = os.environ.get("QWEN_API_KEY", "")
 # --------------------------
 
-def get_crew(selected_model="gemini"):
+def get_local_ollama_llm():
+    """Returns an LLM instance pointing to local Ollama if available."""
+    try:
+        import requests
+        resp = requests.get("http://localhost:11434/api/tags", timeout=2)
+        if resp.status_code == 200:
+            models_data = resp.json().get("models", [])
+            model_names = [m.get("name", "") for m in models_data]
+            for pref in ["llama3.2:3b", "llama3.2:1b", "llama3.2", "llama3", "llama", "qwen2.5"]:
+                for m in model_names:
+                    if pref in m:
+                        return LLM(model=f"ollama/{m}", base_url="http://localhost:11434")
+            if model_names:
+                return LLM(model=f"ollama/{model_names[0]}", base_url="http://localhost:11434")
+    except Exception as e:
+        print(f"Ollama local connection check: {e}")
+    return None
+
+def get_crew(selected_model="local_llama"):
     agents_config = load_yaml('config/agents.yaml')
     tasks_config = load_yaml('config/tasks.yaml')
 
     active_llm = None
     
-    if selected_model == "gemini":
-        if HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
-            active_llm = LLM(model="gemini/gemini-3.5-flash", api_key=HARDCODED_GEMINI_API_KEY)
-        else:
-            return None, "Gemini API Key not configured."
-    elif selected_model == "openai":
-        if HARDCODED_OPENAI_API_KEY and HARDCODED_OPENAI_API_KEY != "YOUR_OPENAI_API_KEY":
-            active_llm = LLM(model="gpt-4o-mini", api_key=HARDCODED_OPENAI_API_KEY)
-        else:
-            return None, "OpenAI API Key not configured."
-    elif selected_model == "llama":
-        groq_key = os.environ.get("GROQ_API_KEY")
-        if groq_key:
-            active_llm = LLM(model="groq/llama-3.1-8b-instant", api_key=groq_key)
-        else:
-            active_llm = LLM(model="ollama/llama3.2:1b", base_url="http://localhost:11434")
+    if selected_model in ["local_llama", "llama"]:
+        active_llm = get_local_ollama_llm()
+        if not active_llm:
+            groq_key = os.environ.get("GROQ_API_KEY")
+            if groq_key:
+                active_llm = LLM(model="groq/llama-3.1-8b-instant", api_key=groq_key)
+            else:
+                active_llm = LLM(model="ollama/llama3.2:3b", base_url="http://localhost:11434")
     elif selected_model == "qwen":
         qwen_key = HARDCODED_QWEN_API_KEY or os.environ.get("DASHSCOPE_API_KEY")
         groq_key = os.environ.get("GROQ_API_KEY")
@@ -50,27 +60,40 @@ def get_crew(selected_model="gemini"):
         elif groq_key:
             active_llm = LLM(model="groq/qwen-2.5-32b", api_key=groq_key)
         else:
-            active_llm = LLM(model="ollama/qwen2.5", base_url="http://localhost:11434")
+            active_llm = get_local_ollama_llm() or LLM(model="ollama/llama3.2:3b", base_url="http://localhost:11434")
+    elif selected_model == "gemini":
+        if HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY" and not HARDCODED_GEMINI_API_KEY.startswith("AQ."):
+            active_llm = LLM(model="gemini/gemini-3.5-flash", api_key=HARDCODED_GEMINI_API_KEY)
+        else:
+            active_llm = get_local_ollama_llm()
+    elif selected_model == "openai":
+        if HARDCODED_OPENAI_API_KEY and HARDCODED_OPENAI_API_KEY != "YOUR_OPENAI_API_KEY":
+            active_llm = LLM(model="gpt-4o-mini", api_key=HARDCODED_OPENAI_API_KEY)
+        else:
+            active_llm = get_local_ollama_llm()
 
     if active_llm is None:
-        return None, f"Failed to initialize the {selected_model} model. Please check the backend configuration."
+        active_llm = get_local_ollama_llm()
+
+    if active_llm is None:
+        return None, "Failed to initialize AI model. Please ensure Ollama is running (`ollama run llama3.2:3b`)."
 
     triage_agent = Agent(
         config=agents_config['triage_agent'],
         llm=active_llm,
-        verbose=True
+        verbose=False
     )
     validation_agent = Agent(
         config=agents_config['validation_agent'],
         llm=active_llm,
         tools=[check_database_for_duplicates],
-        verbose=True
+        verbose=False
     )
     ticketing_agent = Agent(
         config=agents_config['ticketing_agent'],
         llm=active_llm,
         tools=[raise_ticket],
-        verbose=True
+        verbose=False
     )
     
     task_triage = Task(
@@ -95,12 +118,13 @@ def get_crew(selected_model="gemini"):
 
 @app.route("/", methods=["GET"])
 def home():
-    if HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY":
-        llm_name = "Google Gemini 3.5 Flash (Hardcoded)"
+    local_llm = get_local_ollama_llm()
+    if local_llm:
+        llm_name = f"Local Ollama Llama ({local_llm.model.replace('ollama/', '')}) [Free & Offline]"
     elif HARDCODED_OPENAI_API_KEY and HARDCODED_OPENAI_API_KEY != "YOUR_OPENAI_API_KEY":
-        llm_name = "OpenAI GPT-4o-mini (Hardcoded)"
+        llm_name = "OpenAI GPT-4o-mini (Cloud)"
     else:
-        llm_name = "No Cloud LLM Configured"
+        llm_name = "Local Ollama Agent"
         
     return render_template("index.html", active_llm=llm_name)
 
@@ -133,13 +157,11 @@ def security():
     security_logs = get_tickets().get("security", [])
     return render_template("security.html", security_logs=security_logs)
 
-
-
 @app.route("/report", methods=["POST"])
 def process_report():
     data = request.json or {}
     issue_text = data.get("issue_text", "")
-    selected_model = data.get("model", "gemini")
+    selected_model = data.get("model", "local_llama")
     
     if not issue_text:
         return jsonify({"error": "No issue_text provided in the request body"}), 400
@@ -156,7 +178,7 @@ def process_report():
         progress_text = "### Agent Tracking Progress ###\n\n"
         if hasattr(result, 'tasks_output'):
             for task_output in result.tasks_output:
-                progress_text += f"[\u2714] Agent Task Completed: {task_output.description}\n"
+                progress_text += f"[✔] Agent Task Completed: {task_output.description}\n"
                 progress_text += f"{task_output.raw}\n\n"
         
         final_output = f"{progress_text}---\n### Final Result ###\n{str(result)}"
