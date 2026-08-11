@@ -48,8 +48,11 @@ def get_crew(selected_model="local_llama"):
         active_llm = get_local_ollama_llm()
         if not active_llm:
             groq_key = os.environ.get("GROQ_API_KEY")
+            gemini_key = os.environ.get("GEMINI_API_KEY")
             if groq_key:
                 active_llm = LLM(model="groq/llama-3.1-8b-instant", api_key=groq_key)
+            elif gemini_key:
+                active_llm = LLM(model="gemini/gemini-2.0-flash", api_key=gemini_key)
             else:
                 active_llm = LLM(model="ollama/llama3.2:3b", base_url="http://localhost:11434")
     elif selected_model == "qwen":
@@ -62,13 +65,17 @@ def get_crew(selected_model="local_llama"):
         else:
             active_llm = get_local_ollama_llm() or LLM(model="ollama/llama3.2:3b", base_url="http://localhost:11434")
     elif selected_model == "gemini":
-        if HARDCODED_GEMINI_API_KEY and HARDCODED_GEMINI_API_KEY != "YOUR_GEMINI_API_KEY" and not HARDCODED_GEMINI_API_KEY.startswith("AQ."):
+        gemini_key = os.environ.get("GEMINI_API_KEY")
+        if gemini_key:
+            active_llm = LLM(model="gemini/gemini-2.0-flash", api_key=gemini_key)
+        elif HARDCODED_GEMINI_API_KEY and not HARDCODED_GEMINI_API_KEY.startswith("AQ."):
             active_llm = LLM(model="gemini/gemini-3.5-flash", api_key=HARDCODED_GEMINI_API_KEY)
         else:
             active_llm = get_local_ollama_llm()
     elif selected_model == "openai":
-        if HARDCODED_OPENAI_API_KEY and HARDCODED_OPENAI_API_KEY != "YOUR_OPENAI_API_KEY":
-            active_llm = LLM(model="gpt-4o-mini", api_key=HARDCODED_OPENAI_API_KEY)
+        openai_key = os.environ.get("OPENAI_API_KEY") or HARDCODED_OPENAI_API_KEY
+        if openai_key and openai_key != "YOUR_OPENAI_API_KEY":
+            active_llm = LLM(model="gpt-4o-mini", api_key=openai_key)
         else:
             active_llm = get_local_ollama_llm()
 
@@ -76,7 +83,12 @@ def get_crew(selected_model="local_llama"):
         active_llm = get_local_ollama_llm()
 
     if active_llm is None:
-        return None, "Failed to initialize AI model. Please ensure Ollama is running (`ollama run llama3.2:3b`)."
+        groq_key = os.environ.get("GROQ_API_KEY")
+        if groq_key:
+            active_llm = LLM(model="groq/llama-3.1-8b-instant", api_key=groq_key)
+
+    if active_llm is None:
+        return None, "No active AI model found. When deploying on Render, please add a free `GROQ_API_KEY` or `GEMINI_API_KEY` in Environment Variables."
 
     triage_agent = Agent(
         config=agents_config['triage_agent'],
