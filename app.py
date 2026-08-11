@@ -93,18 +93,24 @@ def get_crew(selected_model="local_llama"):
     triage_agent = Agent(
         config=agents_config['triage_agent'],
         llm=active_llm,
+        max_iter=3,
+        max_execution_time=60,
         verbose=False
     )
     validation_agent = Agent(
         config=agents_config['validation_agent'],
         llm=active_llm,
         tools=[check_database_for_duplicates],
+        max_iter=3,
+        max_execution_time=60,
         verbose=False
     )
     ticketing_agent = Agent(
         config=agents_config['ticketing_agent'],
         llm=active_llm,
         tools=[raise_ticket],
+        max_iter=3,
+        max_execution_time=60,
         verbose=False
     )
     
@@ -124,7 +130,8 @@ def get_crew(selected_model="local_llama"):
     community_crew = Crew(
         agents=[triage_agent, validation_agent, ticketing_agent],
         tasks=[task_triage, task_validation, task_create_ticket],
-        process=Process.sequential
+        process=Process.sequential,
+        max_rpm=10
     )
     return community_crew, None
 
