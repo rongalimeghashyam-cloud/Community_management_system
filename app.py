@@ -56,101 +56,94 @@ def safe_create_llm(model_name, api_key=None, base_url=None):
 
 def resolve_active_llm(selected_model=None):
     """
-    Smart resolution of active LLM instance. Automatically picks the best operational
-    model based on available API keys (Gemini -> Groq -> OpenAI -> Qwen -> Anthropic -> DeepSeek -> Ollama).
+    Resolves the active LLM instance strictly matching the requested provider or default setting.
+    If Llama is selected (local_llama or groq), it will NEVER connect to Gemini keys.
     """
     keys = get_api_keys()
     settings = get_settings()
     
-    if not selected_model or selected_model in ["default", "auto", "auto_select"]:
-        # Default smart auto-selection: check highest quality/fastest active key
-        if keys.get("gemini"):
-            llm = safe_create_llm("gemini/gemini-2.0-flash", api_key=keys["gemini"])
-            if llm: return llm, "Google Gemini 2.0 Flash (Auto Selected)", None
-            
-        if keys.get("groq"):
-            llm = safe_create_llm("groq/llama-3.1-8b-instant", api_key=keys["groq"])
-            if llm: return llm, "Groq Llama 3.1 8B (Auto Selected)", None
-            
-        if keys.get("openai"):
-            llm = safe_create_llm("gpt-4o-mini", api_key=keys["openai"])
-            if llm: return llm, "OpenAI GPT-4o-mini (Auto Selected)", None
-            
-        if keys.get("qwen"):
-            llm = safe_create_llm("qwen/qwen-2.5-72b-instruct", api_key=keys["qwen"])
-            if llm: return llm, "Alibaba Qwen 2.5 72B (Auto Selected)", None
-            
-        if keys.get("anthropic"):
-            llm = safe_create_llm("anthropic/claude-3-5-sonnet-20241022", api_key=keys["anthropic"])
-            if llm: return llm, "Claude 3.5 Sonnet (Auto Selected)", None
-            
-        if keys.get("deepseek"):
-            llm = safe_create_llm("deepseek/deepseek-chat", api_key=keys["deepseek"], base_url="https://api.deepseek.com")
-            if llm: return llm, "DeepSeek V3 (Auto Selected)", None
-        
-        ollama_llm, name = get_local_ollama_llm(keys.get("ollama_url"))
-        if ollama_llm:
-            return ollama_llm, f"{name} (Auto Selected)", None
-
+    # Normalize selected model parameter
+    if not selected_model or selected_model in ["default", "auto"]:
         selected_model = settings.get("default_model", "local_llama")
 
     selected_model = selected_model.lower().strip()
 
-    # Try requested model preference if specified by user
-    if selected_model in ["local_llama", "ollama"]:
+    # 1. Llama Selection (Local Ollama or Groq Llama)
+    if selected_model in ["local_llama", "ollama", "llama"]:
+        # Try local Ollama server first
         llm, name = get_local_ollama_llm(keys.get("ollama_url"))
         if llm:
             return llm, name, None
-            
-    elif selected_model == "gemini" and keys.get("gemini"):
-        llm = safe_create_llm("gemini/gemini-2.0-flash", api_key=keys["gemini"])
-        if llm: return llm, "Google Gemini 2.0 Flash", None
-        
-    elif selected_model == "groq" and keys.get("groq"):
-        llm = safe_create_llm("groq/llama-3.1-8b-instant", api_key=keys["groq"])
-        if llm: return llm, "Groq Llama 3.1 8B", None
-        
-    elif selected_model == "openai" and keys.get("openai"):
-        llm = safe_create_llm("gpt-4o-mini", api_key=keys["openai"])
-        if llm: return llm, "OpenAI GPT-4o-mini", None
-        
-    elif selected_model == "qwen" and keys.get("qwen"):
-        llm = safe_create_llm("qwen/qwen-2.5-72b-instruct", api_key=keys["qwen"])
-        if llm: return llm, "Alibaba Qwen 2.5 72B", None
+        # If local Ollama is offline, check Groq Llama key
+        if keys.get("groq"):
+            llm = safe_create_llm("groq/llama-3.1-8b-instant", api_key=keys["groq"])
+            if llm:
+                return llm, "Groq Llama 3.1 8B (Cloud Llama)", None
+        return None, None, "Local Llama (Ollama) server is offline and no Groq Llama key configured. Will not use Gemini."
 
-    elif selected_model == "anthropic" and keys.get("anthropic"):
-        llm = safe_create_llm("anthropic/claude-3-5-sonnet-20241022", api_key=keys["anthropic"])
-        if llm: return llm, "Claude 3.5 Sonnet", None
+    # 2. Groq Llama Selection
+    elif selected_model in ["groq", "groq_llama"]:
+        if keys.get("groq"):
+            llm = safe_create_llm("groq/llama-3.1-8b-instant", api_key=keys["groq"])
+            if llm:
+                return llm, "Groq Llama 3.1 8B", None
+        # Fallback to local Ollama Llama
+        llm, name = get_local_ollama_llm(keys.get("ollama_url"))
+        if llm:
+            return llm, f"{name} (Local Llama Fallback)", None
+        return None, None, "Groq API key missing or invalid. Will not use Gemini."
 
-    elif selected_model == "deepseek" and keys.get("deepseek"):
-        llm = safe_create_llm("deepseek/deepseek-chat", api_key=keys["deepseek"], base_url="https://api.deepseek.com")
-        if llm: return llm, "DeepSeek V3", None
+    # 3. Google Gemini Selection
+    elif selected_model == "gemini":
+        if keys.get("gemini"):
+            llm = safe_create_llm("gemini/gemini-2.0-flash", api_key=keys["gemini"])
+            if llm:
+                return llm, "Google Gemini 2.0 Flash", None
+        return None, None, "Google Gemini API key missing or invalid."
 
-    # Fallback Cascade: Check available keys in priority order
-    if keys.get("gemini"):
-        llm = safe_create_llm("gemini/gemini-2.0-flash", api_key=keys["gemini"])
-        if llm: return llm, "Google Gemini 2.0 Flash (Fallback)", None
-    if keys.get("groq"):
-        llm = safe_create_llm("groq/llama-3.1-8b-instant", api_key=keys["groq"])
-        if llm: return llm, "Groq Llama 3.1 (Fallback)", None
-    if keys.get("openai"):
-        llm = safe_create_llm("gpt-4o-mini", api_key=keys["openai"])
-        if llm: return llm, "OpenAI GPT-4o-mini (Fallback)", None
-    if keys.get("qwen"):
-        llm = safe_create_llm("qwen/qwen-2.5-72b-instruct", api_key=keys["qwen"])
-        if llm: return llm, "Qwen 2.5 (Fallback)", None
-    if keys.get("anthropic"):
-        llm = safe_create_llm("anthropic/claude-3-5-sonnet-20241022", api_key=keys["anthropic"])
-        if llm: return llm, "Claude 3.5 (Fallback)", None
-    if keys.get("deepseek"):
-        llm = safe_create_llm("deepseek/deepseek-chat", api_key=keys["deepseek"], base_url="https://api.deepseek.com")
-        if llm: return llm, "DeepSeek V3 (Fallback)", None
+    # 4. OpenAI Selection
+    elif selected_model == "openai":
+        if keys.get("openai"):
+            llm = safe_create_llm("gpt-4o-mini", api_key=keys["openai"])
+            if llm:
+                return llm, "OpenAI GPT-4o-mini", None
+        return None, None, "OpenAI API key missing or invalid."
 
+    # 5. Alibaba Qwen Selection
+    elif selected_model == "qwen":
+        if keys.get("qwen"):
+            llm = safe_create_llm("qwen/qwen-2.5-72b-instruct", api_key=keys["qwen"])
+            if llm:
+                return llm, "Alibaba Qwen 2.5 72B", None
+        return None, None, "Qwen API key missing or invalid."
+
+    # 6. Anthropic Claude Selection
+    elif selected_model == "anthropic":
+        if keys.get("anthropic"):
+            llm = safe_create_llm("anthropic/claude-3-5-sonnet-20241022", api_key=keys["anthropic"])
+            if llm:
+                return llm, "Claude 3.5 Sonnet", None
+        return None, None, "Anthropic API key missing or invalid."
+
+    # 7. DeepSeek Selection
+    elif selected_model == "deepseek":
+        if keys.get("deepseek"):
+            llm = safe_create_llm("deepseek/deepseek-chat", api_key=keys["deepseek"], base_url="https://api.deepseek.com")
+            if llm:
+                return llm, "DeepSeek V3", None
+        return None, None, "DeepSeek API key missing or invalid."
+
+    # General Fallback (Ollama -> Groq Llama)
     ollama_llm, ollama_name = get_local_ollama_llm(keys.get("ollama_url"))
     if ollama_llm:
-        return ollama_llm, f"{ollama_name} (Fallback)", None
+        return ollama_llm, ollama_name, None
 
-    return None, None, "No active API key or local Ollama model found! Please configure API keys in the Admin Portal."
+    if keys.get("groq"):
+        llm = safe_create_llm("groq/llama-3.1-8b-instant", api_key=keys["groq"])
+        if llm: return llm, "Groq Llama 3.1", None
+
+    return None, None, "No active Llama or API key found! Please configure keys in Admin Portal."
+
 
 
 def get_crew(selected_model="local_llama"):
