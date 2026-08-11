@@ -2,172 +2,324 @@
 {% block content %}
 <div class="content">
             
-            <div class="page-header">
-                <div class="page-title">
-                    <h1>Good morning, Sarah.</h1>
-                    <p>Here's what's happening in Greenwood Village today.</p>
-                </div>
-                <button class="btn-export" onclick="window.print()">
-                    <i class="ph ph-download-simple"></i> Export Report
-                </button>
+    <div class="page-header">
+        <div class="page-title">
+            <h1>Good morning, Sarah.</h1>
+            <p>Welcome to Greenwood Village User Portal. Ask the AI Agent or manage resident queries.</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <a href="{{ url_for('admin_portal') }}" class="btn-export" style="background: var(--accent-blue); color: white; border: none; text-decoration: none;">
+                <i class="ph ph-key"></i> Manage API Keys (Admin)
+            </a>
+            <button class="btn-export" onclick="window.print()">
+                <i class="ph ph-download-simple"></i> Export Report
+            </button>
+        </div>
+    </div>
+
+    <!-- DIRECT AI AGENT CONNECTION CARD -->
+    <div class="map-card" style="padding: 24px; margin-bottom: 24px; background: linear-gradient(135deg, #FFFFFF 0%, #F4F7FE 100%); border: 1px solid #BFDBFE;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+            <div>
+                <h3 style="font-size: 20px; font-weight: 700; color: #1E293B; display: flex; align-items: center; gap: 10px;">
+                    <i class="ph-fill ph-sparkle" style="color: #2563EB;"></i> Greenwood AI Assistant (Direct Agent Engine)
+                </h3>
+                <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">
+                    Ask any question, check pool hours, or report an issue. Your query connects directly to the multi-model CrewAI agent running on active API keys.
+                </p>
             </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 12px; font-weight: 600; color: var(--text-muted);">LLM Model:</label>
+                <select id="userQueryModel" style="padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 13px; font-weight: 500; background: white;">
+                    <option value="default" selected>⚡ Auto / Primary Active Model</option>
+                    <option value="gemini">Google Gemini 2.0 Flash</option>
+                    <option value="groq">Groq Llama 3.1 8B</option>
+                    <option value="openai">OpenAI GPT-4o-mini</option>
+                    <option value="qwen">Alibaba Qwen 2.5 72B</option>
+                    <option value="anthropic">Anthropic Claude 3.5</option>
+                    <option value="deepseek">DeepSeek V3</option>
+                    <option value="local_llama">Local Llama 3.2 (Ollama)</option>
+                </select>
+            </div>
+        </div>
 
-            <!-- STATS -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon icon-blue"><i class="ph-fill ph-users-three"></i></div>
-                        <span class="stat-badge badge-blue">↑ 2.4%</span>
-                    </div>
-                    <div>
-                        <div class="stat-title">Total Residents</div>
-                        <div class="stat-value">1,428</div>
-                    </div>
+        <!-- Prompt Suggestions -->
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;">
+            <span style="font-size: 12px; font-weight: 600; color: var(--text-muted); display: flex; align-items: center;">Try prompt:</span>
+            <button class="prompt-pill" onclick="setQuery('Water leaking heavily in Bldg B, Unit 402!')">💧 Leaking Pipe Bldg B</button>
+            <button class="prompt-pill" onclick="setQuery('What are the community pool hours and rules?')">🏊 Pool Hours & Rules</button>
+            <button class="prompt-pill" onclick="setQuery('When is the next HOA community event?')">📅 Next HOA Event</button>
+            <button class="prompt-pill" onclick="setQuery('Unauthorized suspicious vehicle parked at Gate B')">🚨 Gate B Security Warning</button>
+        </div>
+
+        <div style="display: flex; gap: 12px; align-items: stretch;">
+            <input type="text" id="directQueryInput" placeholder="Type your query or complaint here... (e.g. 'There is a streetlight out on Main Street')" style="flex: 1; padding: 14px 18px; border: 1px solid var(--border-color); border-radius: 10px; font-size: 14px; outline: none; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.02);" onkeypress="if(event.key === 'Enter') submitDirectQuery()">
+            <button onclick="submitDirectQuery()" id="directQueryBtn" style="background: var(--accent-blue); color: white; border: none; border-radius: 10px; padding: 0 24px; font-weight: 600; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: background 0.2s;">
+                <i class="ph-fill ph-paper-plane-right"></i> Connect to Agent
+            </button>
+        </div>
+
+        <!-- Live Agent Thinking & Result Output Box -->
+        <div id="directQueryResult" style="display: none; margin-top: 20px; background: white; border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                <div style="font-weight: 700; font-size: 14px; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                    <i class="ph-fill ph-check-circle" style="color: #059669;" id="agentStatusIcon"></i>
+                    <span id="agentResultTitle">Agent Output</span>
                 </div>
+                <span id="agentModelBadge" class="stat-badge badge-blue"></span>
+            </div>
+            <div id="agentStepsContainer" style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;"></div>
+            <div id="agentAnswerBox" style="font-size: 14px; color: var(--text-main); line-height: 1.6; white-space: pre-wrap; font-weight: 500; background: #F8FAFC; padding: 14px; border-radius: 8px; border: 1px solid var(--border-color);"></div>
+        </div>
+    </div>
 
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon icon-red" style="background:#FEF2F2; color:#DC2626;"><i class="ph-fill ph-wrench"></i></div>
-                        <span class="stat-badge badge-gray">— 0%</span>
-                    </div>
-                    <div>
-                        <div class="stat-title">Open Maintenance Requests</div>
-                        <div class="stat-value">24</div>
-                    </div>
-                </div>
+    <!-- STATS -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon icon-blue"><i class="ph-fill ph-users-three"></i></div>
+                <span class="stat-badge badge-blue">↑ 2.4%</span>
+            </div>
+            <div>
+                <div class="stat-title">Total Residents</div>
+                <div class="stat-value">1,428</div>
+            </div>
+        </div>
 
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon icon-indigo"><i class="ph-fill ph-calendar-check"></i></div>
-                        <span class="stat-badge badge-blue">Next: Tomorrow</span>
-                    </div>
-                    <div>
-                        <div class="stat-title">Upcoming Events</div>
-                        <div class="stat-value">3</div>
-                    </div>
-                </div>
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon icon-red" style="background:#FEF2F2; color:#DC2626;"><i class="ph-fill ph-wrench"></i></div>
+                <span class="stat-badge badge-gray">— 0%</span>
+            </div>
+            <div>
+                <div class="stat-title">Open Maintenance Requests</div>
+                <div class="stat-value">24</div>
+            </div>
+        </div>
 
-                <div class="stat-card">
-                    <div class="stat-header">
-                        <div class="stat-icon icon-red"><i class="ph-fill ph-shield-warning"></i></div>
-                        <span class="stat-badge badge-red">Action Req.</span>
-                    </div>
-                    <div>
-                        <div class="stat-title">Security Alerts</div>
-                        <div class="stat-value">1</div>
-                    </div>
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon icon-indigo"><i class="ph-fill ph-calendar-check"></i></div>
+                <span class="stat-badge badge-blue">Next: Tomorrow</span>
+            </div>
+            <div>
+                <div class="stat-title">Upcoming Events</div>
+                <div class="stat-value">3</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-header">
+                <div class="stat-icon icon-red"><i class="ph-fill ph-shield-warning"></i></div>
+                <span class="stat-badge badge-red">Action Req.</span>
+            </div>
+            <div>
+                <div class="stat-title">Security Alerts</div>
+                <div class="stat-value">1</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="bottom-grid">
+        
+        <!-- MAP/OVERVIEW -->
+        <div class="map-card">
+            <div class="card-header">
+                <h3>Community Overview</h3>
+                <div class="view-toggle">
+                    <span class="active">Village View</span>
+                    <span>Building View</span>
                 </div>
             </div>
+            <div class="map-interactive-area">
+                <!-- Simulated map building blocks -->
+                <div class="map-item">
+                    <div class="map-item-title">
+                        <span>Building A</span>
+                        <i class="ph ph-arrow-square-out" style="color:var(--text-muted)"></i>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 90%;"></div></div>
+                    <div class="progress-text">45/50</div>
+                </div>
 
-            <!-- MAIN GRID -->
-            <div class="bottom-grid">
+                <div class="map-item" style="margin-left: 200px;">
+                    <div class="map-item-title">
+                        <span>Building B (Tower)</span>
+                        <i class="ph ph-arrow-square-out" style="color:var(--text-muted)"></i>
+                    </div>
+                    <div class="stat-badge badge-red" style="display:inline-block; margin-bottom:12px; font-size:10px;"><i class="ph-fill ph-wrench"></i> Maintenance Req (2)</div>
+                    <div class="progress-bar"><div class="progress-fill" style="width: 75%;"></div></div>
+                    <div class="progress-text">75/100</div>
+                </div>
                 
-                <!-- MAP/OVERVIEW -->
-                <div class="map-card">
-                    <div class="card-header">
-                        <h3>Community Overview</h3>
-                        <div class="view-toggle">
-                            <span class="active">Village View</span>
-                            <span>Building View</span>
-                        </div>
-                    </div>
-                    <div class="map-interactive-area">
-                        <!-- Simulated map building blocks -->
-                        <div class="map-item">
-                            <div class="map-item-title">
-                                <span>Building A</span>
-                                <i class="ph ph-arrow-square-out" style="color:var(--text-muted)"></i>
-                            </div>
-                            <div class="progress-bar"><div class="progress-fill" style="width: 90%;"></div></div>
-                            <div class="progress-text">45/50</div>
-                        </div>
-
-                        <div class="map-item" style="margin-left: 200px;">
-                            <div class="map-item-title">
-                                <span>Building B (Tower)</span>
-                                <i class="ph ph-arrow-square-out" style="color:var(--text-muted)"></i>
-                            </div>
-                            <div class="stat-badge badge-red" style="display:inline-block; margin-bottom:12px; font-size:10px;"><i class="ph-fill ph-wrench"></i> Maintenance Req (2)</div>
-                            <div class="progress-bar"><div class="progress-fill" style="width: 75%;"></div></div>
-                            <div class="progress-text">75/100</div>
-                        </div>
-                        
-                        <div class="map-item" style="background:#E0E7FF; border-color:#C7D2FE; text-align:center; padding: 24px; margin-left: 60px;">
-                            <i class="ph-fill ph-swimming-pool" style="font-size:32px; color:#3730A3;"></i>
-                            <div style="font-weight:600; color:#312E81; margin-top:8px;">Rec Center</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- RIGHT SIDEBAR ELEMENTS -->
-                <div class="right-column">
-                    
-                    <!-- QUICK ACTIONS -->
-                    <div class="quick-actions-card">
-                        <h3 style="font-size:18px; font-weight:600;">Quick Actions</h3>
-                        <div class="action-grid">
-                            <div class="action-btn" onclick="document.getElementById('complaintModal').style.display='flex'">
-                                <i class="ph ph-megaphone"></i>
-                                <span>Run AI<br>Analysis</span>
-                            </div>
-                            <div class="action-btn" onclick="document.getElementById('complaintModal').style.display='flex'">
-                                <i class="ph ph-wrench"></i>
-                                <span>Schedule<br>Maint.</span>
-                            </div>
-                            <a href="{{ url_for('residents') }}" class="action-btn" style="text-decoration: none; color: inherit;">
-                                <i class="ph ph-user-plus"></i>
-                                <span>Add<br>Resident</span>
-                            </a>
-                            <a href="#" class="action-btn" style="text-decoration: none; color: inherit;">
-                                <i class="ph ph-money"></i>
-                                <span>Record<br>Payment</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- RECENT ACTIVITY -->
-                    <div class="activity-card">
-                        <div class="card-header" style="border:none;">
-                            <h3>Recent Activity</h3>
-                            <a href="{{ url_for('security') }}" style="font-size:13px; color:var(--accent-blue); text-decoration:none; font-weight:600;">View All</a>
-                        </div>
-                        <div class="activity-list">
-                            <div class="activity-item">
-                                <div class="activity-icon"><i class="ph ph-wrench"></i></div>
-                                <div class="activity-content">
-                                    <p><strong>Plumbing issue</strong> reported in Bldg B, Unit 402.</p>
-                                    <div class="activity-meta">10 mins ago • High Priority</div>
-                                </div>
-                            </div>
-
-                            <div class="activity-item">
-                                <div class="activity-icon" style="background:none; overflow:hidden;"><img src="https://i.pravatar.cc/150?img=11" style="width:100%; height:100%;"></div>
-                                <div class="activity-content">
-                                    <p><strong>Mark J.</strong> signed lease agreement for Unit 110.</p>
-                                    <div class="activity-meta">2 hours ago • New Resident</div>
-                                </div>
-                            </div>
-
-                            <div class="activity-item">
-                                <div class="activity-icon" style="background:#E0E7FF; color:#4F46E5;"><i class="ph ph-confetti"></i></div>
-                                <div class="activity-content">
-                                    <p><strong>Summer BBQ Event</strong> confirmed for next Saturday.</p>
-                                    <div class="activity-meta">Yesterday • Community Event</div>
-                                </div>
-                            </div>
-                            
-                            <div class="activity-item">
-                                <div class="activity-icon" style="background:#E2E8F0; color:#475569;"><i class="ph ph-check-circle"></i></div>
-                                <div class="activity-content">
-                                    <p>Monthly maintenance check completed for <strong>Bldg A</strong>.</p>
-                                    <div class="activity-meta">Yesterday • Routine</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
+                <div class="map-item" style="background:#E0E7FF; border-color:#C7D2FE; text-align:center; padding: 24px; margin-left: 60px;">
+                    <i class="ph-fill ph-swimming-pool" style="font-size:32px; color:#3730A3;"></i>
+                    <div style="font-weight:600; color:#312E81; margin-top:8px;">Rec Center</div>
                 </div>
             </div>
         </div>
+
+        <!-- RIGHT SIDEBAR ELEMENTS -->
+        <div class="right-column">
+            
+            <!-- QUICK ACTIONS -->
+            <div class="quick-actions-card">
+                <h3 style="font-size:18px; font-weight:600;">Quick Actions</h3>
+                <div class="action-grid">
+                    <div class="action-btn" onclick="document.getElementById('complaintModal').style.display='flex'">
+                        <i class="ph ph-megaphone"></i>
+                        <span>Run AI<br>Analysis</span>
+                    </div>
+                    <a href="{{ url_for('admin_portal') }}" class="action-btn" style="text-decoration: none; color: inherit;">
+                        <i class="ph ph-key"></i>
+                        <span>API Keys<br>Portal</span>
+                    </a>
+                    <a href="{{ url_for('residents') }}" class="action-btn" style="text-decoration: none; color: inherit;">
+                        <i class="ph ph-user-plus"></i>
+                        <span>Add<br>Resident</span>
+                    </a>
+                    <a href="{{ url_for('maintenance') }}" class="action-btn" style="text-decoration: none; color: inherit;">
+                        <i class="ph ph-wrench"></i>
+                        <span>View<br>Tickets</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- RECENT ACTIVITY -->
+            <div class="activity-card">
+                <div class="card-header" style="border:none;">
+                    <h3>Recent Activity</h3>
+                    <a href="{{ url_for('security') }}" style="font-size:13px; color:var(--accent-blue); text-decoration:none; font-weight:600;">View All</a>
+                </div>
+                <div class="activity-list">
+                    <div class="activity-item">
+                        <div class="activity-icon"><i class="ph ph-wrench"></i></div>
+                        <div class="activity-content">
+                            <p><strong>Plumbing issue</strong> reported in Bldg B, Unit 402.</p>
+                            <div class="activity-meta">10 mins ago • High Priority</div>
+                        </div>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-icon" style="background:none; overflow:hidden;"><img src="https://i.pravatar.cc/150?img=11" style="width:100%; height:100%;"></div>
+                        <div class="activity-content">
+                            <p><strong>Mark J.</strong> signed lease agreement for Unit 110.</p>
+                            <div class="activity-meta">2 hours ago • New Resident</div>
+                        </div>
+                    </div>
+
+                    <div class="activity-item">
+                        <div class="activity-icon" style="background:#E0E7FF; color:#4F46E5;"><i class="ph ph-confetti"></i></div>
+                        <div class="activity-content">
+                            <p><strong>Summer BBQ Event</strong> confirmed for next Saturday.</p>
+                            <div class="activity-meta">Yesterday • Community Event</div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon" style="background:#E2E8F0; color:#475569;"><i class="ph ph-check-circle"></i></div>
+                        <div class="activity-content">
+                            <p>Monthly maintenance check completed for <strong>Bldg A</strong>.</p>
+                            <div class="activity-meta">Yesterday • Routine</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<style>
+.prompt-pill {
+    background: #EFF6FF;
+    color: #1E40AF;
+    border: 1px solid #BFDBFE;
+    padding: 6px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.prompt-pill:hover {
+    background: #DBEAFE;
+    border-color: #2563EB;
+}
+</style>
+
+<script>
+function setQuery(text) {
+    document.getElementById('directQueryInput').value = text;
+}
+
+async function submitDirectQuery() {
+    const input = document.getElementById('directQueryInput');
+    const btn = document.getElementById('directQueryBtn');
+    const model = document.getElementById('userQueryModel').value;
+    const resultBox = document.getElementById('directQueryResult');
+    const stepsContainer = document.getElementById('agentStepsContainer');
+    const answerBox = document.getElementById('agentAnswerBox');
+    const badge = document.getElementById('agentModelBadge');
+    const statusIcon = document.getElementById('agentStatusIcon');
+    const resultTitle = document.getElementById('agentResultTitle');
+
+    const queryText = input.value.trim();
+    if(!queryText) return;
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="ph-bold ph-spinner spinner" style="animation: spin 1s linear infinite;"></i> Agent Thinking...`;
     
+    resultBox.style.display = "block";
+    resultTitle.innerText = "Agent Processing Query...";
+    statusIcon.className = "ph-fill ph-clock";
+    statusIcon.style.color = "#F59E0B";
+    stepsContainer.innerHTML = `<div style="font-style: italic;">Routing query to CrewAI Agent system...</div>`;
+    answerBox.innerText = "Agents are evaluating safety risk, querying databases, and executing tools...";
+    badge.innerText = model.toUpperCase();
+
+    try {
+        const response = await fetch('/query', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ query: queryText, model: model })
+        });
+        
+        const data = await response.json();
+        if(response.ok && data.status === 'success') {
+            statusIcon.className = "ph-fill ph-check-circle";
+            statusIcon.style.color = "#059669";
+            resultTitle.innerText = "Agent Response Completed (" + data.duration + "s)";
+            badge.innerText = data.model_used || model;
+            
+            let stepsHtml = "";
+            if(data.steps && data.steps.length > 0) {
+                data.steps.forEach((step, idx) => {
+                    stepsHtml += `<div style="background:#F1F5F9; padding:8px 12px; border-radius:6px;"><strong>Task ${idx+1}:</strong> ${step.description}</div>`;
+                });
+            }
+            stepsContainer.innerHTML = stepsHtml;
+            answerBox.innerText = data.answer;
+        } else {
+            statusIcon.className = "ph-fill ph-warning-circle";
+            statusIcon.style.color = "#DC2626";
+            resultTitle.innerText = "Agent Execution Error";
+            answerBox.innerText = data.error || "An error occurred while connecting to the agent.";
+        }
+    } catch(err) {
+        statusIcon.className = "ph-fill ph-x-circle";
+        statusIcon.style.color = "#DC2626";
+        resultTitle.innerText = "Network Error";
+        answerBox.innerText = "Error reaching backend server: " + err.message;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="ph-fill ph-paper-plane-right"></i> Connect to Agent`;
+    }
+}
+</script>
+
+<style>
+@keyframes spin { 100% { transform: rotate(360deg); } }
+</style>
 {% endblock %}

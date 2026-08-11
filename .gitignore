@@ -9,3 +9,5 @@ venv/
 .vscode/
 .idea/
 config/settings.json
+config/query_logs.json
+config/firebase-credentials.json

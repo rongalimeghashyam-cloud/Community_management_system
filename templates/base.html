@@ -605,7 +605,8 @@
         </div>
 
         <nav class="nav-links">
-            <a class="nav-item {% if request.endpoint == 'home' %}active{% endif %}" href="{{ url_for('home') }}"><i class="ph ph-squares-four"></i> Overview</a>
+            <a class="nav-item {% if request.endpoint == 'home' %}active{% endif %}" href="{{ url_for('home') }}"><i class="ph ph-squares-four"></i> User Portal</a>
+            <a class="nav-item {% if request.endpoint == 'admin_portal' %}active{% endif %}" href="{{ url_for('admin_portal') }}"><i class="ph ph-sliders-horizontal"></i> Admin Portal</a>
             <a class="nav-item {% if request.endpoint == 'residents' %}active{% endif %}" href="{{ url_for('residents') }}"><i class="ph ph-users"></i> Residents</a>
             <a class="nav-item {% if request.endpoint == 'maintenance' %}active{% endif %}" href="{{ url_for('maintenance') }}"><i class="ph ph-wrench"></i> Maintenance</a>
             <a class="nav-item {% if request.endpoint == 'events' %}active{% endif %}" href="{{ url_for('events') }}"><i class="ph ph-calendar-blank"></i> Events</a>
@@ -615,11 +616,11 @@
         <div class="sidebar-divider"></div>
 
         <button class="btn-broadcast" onclick="document.getElementById('complaintModal').style.display='flex'">
-            <i class="ph ph-megaphone"></i> Run AI Analysis
+            <i class="ph ph-sparkle"></i> AI Agent Assistant
         </button>
 
         <div class="bottom-links">
-            <a href="#" class="nav-item" onclick="document.getElementById('complaintModal').style.display='flex'"><i class="ph ph-question"></i> Support</a>
+            <a href="{{ url_for('admin_portal') }}" class="nav-item"><i class="ph ph-key"></i> API Keys Setup</a>
             <a href="{{ url_for('home') }}" class="nav-item"><i class="ph ph-sign-out"></i> Sign Out</a>
         </div>
     </aside>
@@ -634,6 +635,10 @@
                 <input type="text" class="search-bar" placeholder="Search residents, units, or tickets...">
             </div>
             <div class="header-actions">
+                <div style="display: flex; align-items: center; gap: 6px; background: #EFF6FF; border: 1px solid #BFDBFE; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; color: #1D4ED8;">
+                    <i class="ph-fill ph-cpu" style="font-size: 16px;"></i>
+                    <span>{{ active_llm if active_llm else active_model_name if active_model_name else 'AI Agent Online' }}</span>
+                </div>
                 <button class="icon-btn" onclick="window.location.href='{{ url_for('security') }}'">
                     <i class="ph ph-bell"></i>
                     <span class="notification-dot"></span>
