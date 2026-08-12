@@ -1,6 +1,11 @@
 import os
 import json
 import time
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 HAS_FIREBASE = False
 try:
