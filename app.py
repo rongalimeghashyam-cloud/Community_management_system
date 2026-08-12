@@ -56,58 +56,49 @@ def safe_create_llm(model_name, api_key=None, base_url=None):
 
 def resolve_active_llm(selected_model=None):
     """
-    Resolves the active LLM instance strictly matching the requested provider or default setting.
-    If Llama is selected (local_llama or groq), it will NEVER connect to Gemini keys.
+    Resolves the active LLM instance matching the requested provider or default setting.
+    Seamlessly falls back across Gemini, OpenAI, DeepSeek, Anthropic, and Llama.
     """
     keys = get_api_keys()
     settings = get_settings()
     
     # Normalize selected model parameter
     if not selected_model or selected_model in ["default", "auto"]:
-        selected_model = settings.get("default_model", "local_llama")
+        selected_model = settings.get("default_model", "auto")
 
     selected_model = selected_model.lower().strip()
 
-    # 1. Llama Selection (Local Ollama or Groq Llama)
-    if selected_model in ["local_llama", "ollama", "llama"]:
-        # Try local Ollama server first
-        llm, name = get_local_ollama_llm(keys.get("ollama_url"))
-        if llm:
-            return llm, name, None
-        # If local Ollama is offline, check Groq Llama key
-        if keys.get("groq"):
-            llm = safe_create_llm("groq/llama-3.1-8b-instant", api_key=keys["groq"])
-            if llm:
-                return llm, "Groq Llama 3.1 8B (Cloud Llama)", None
-        return None, None, "Local Llama (Ollama) server is offline and no Groq Llama key configured. Will not use Gemini."
-
-    # 2. Groq Llama Selection
-    elif selected_model in ["groq", "groq_llama"]:
-        if keys.get("groq"):
-            llm = safe_create_llm("groq/llama-3.1-8b-instant", api_key=keys["groq"])
-            if llm:
-                return llm, "Groq Llama 3.1 8B", None
-        # Fallback to local Ollama Llama
-        llm, name = get_local_ollama_llm(keys.get("ollama_url"))
-        if llm:
-            return llm, f"{name} (Local Llama Fallback)", None
-        return None, None, "Groq API key missing or invalid. Will not use Gemini."
-
-    # 3. Google Gemini Selection
-    elif selected_model == "gemini":
+    # 1. Google Gemini Selection
+    if selected_model == "gemini":
         if keys.get("gemini"):
             llm = safe_create_llm("gemini/gemini-2.0-flash", api_key=keys["gemini"])
             if llm:
                 return llm, "Google Gemini 2.0 Flash", None
         return None, None, "Google Gemini API key missing or invalid."
 
-    # 4. OpenAI Selection
+    # 2. OpenAI Selection
     elif selected_model == "openai":
         if keys.get("openai"):
             llm = safe_create_llm("gpt-4o-mini", api_key=keys["openai"])
             if llm:
                 return llm, "OpenAI GPT-4o-mini", None
         return None, None, "OpenAI API key missing or invalid."
+
+    # 3. DeepSeek Selection
+    elif selected_model == "deepseek":
+        if keys.get("deepseek"):
+            llm = safe_create_llm("deepseek/deepseek-chat", api_key=keys["deepseek"], base_url="https://api.deepseek.com")
+            if llm:
+                return llm, "DeepSeek V3", None
+        return None, None, "DeepSeek API key missing or invalid."
+
+    # 4. Anthropic Claude Selection
+    elif selected_model == "anthropic":
+        if keys.get("anthropic"):
+            llm = safe_create_llm("anthropic/claude-3-5-sonnet-20241022", api_key=keys["anthropic"])
+            if llm:
+                return llm, "Claude 3.5 Sonnet", None
+        return None, None, "Anthropic API key missing or invalid."
 
     # 5. Alibaba Qwen Selection
     elif selected_model == "qwen":
@@ -117,32 +108,53 @@ def resolve_active_llm(selected_model=None):
                 return llm, "Alibaba Qwen 2.5 72B", None
         return None, None, "Qwen API key missing or invalid."
 
-    # 6. Anthropic Claude Selection
-    elif selected_model == "anthropic":
-        if keys.get("anthropic"):
-            llm = safe_create_llm("anthropic/claude-3-5-sonnet-20241022", api_key=keys["anthropic"])
+    # 6. Llama / Groq Selection
+    elif selected_model in ["local_llama", "ollama", "llama", "groq", "groq_llama"]:
+        llm, name = get_local_ollama_llm(keys.get("ollama_url"))
+        if llm:
+            return llm, name, None
+        if keys.get("groq"):
+            llm = safe_create_llm("groq/llama-3.1-8b-instant", api_key=keys["groq"])
             if llm:
-                return llm, "Claude 3.5 Sonnet", None
-        return None, None, "Anthropic API key missing or invalid."
+                return llm, "Groq Llama 3.1 8B", None
 
-    # 7. DeepSeek Selection
-    elif selected_model == "deepseek":
-        if keys.get("deepseek"):
-            llm = safe_create_llm("deepseek/deepseek-chat", api_key=keys["deepseek"], base_url="https://api.deepseek.com")
-            if llm:
-                return llm, "DeepSeek V3", None
-        return None, None, "DeepSeek API key missing or invalid."
-
-    # General Fallback (Ollama -> Groq Llama)
+    # AUTO / DEFAULT Fallback Chain (Ideal for Render cloud & local offline fallbacks):
+    # Try local Ollama if online
     ollama_llm, ollama_name = get_local_ollama_llm(keys.get("ollama_url"))
     if ollama_llm:
         return ollama_llm, ollama_name, None
 
+    # Try Gemini
+    if keys.get("gemini"):
+        llm = safe_create_llm("gemini/gemini-2.0-flash", api_key=keys["gemini"])
+        if llm:
+            return llm, "Google Gemini 2.0 Flash", None
+
+    # Try OpenAI
+    if keys.get("openai"):
+        llm = safe_create_llm("gpt-4o-mini", api_key=keys["openai"])
+        if llm:
+            return llm, "OpenAI GPT-4o-mini", None
+
+    # Try DeepSeek
+    if keys.get("deepseek"):
+        llm = safe_create_llm("deepseek/deepseek-chat", api_key=keys["deepseek"], base_url="https://api.deepseek.com")
+        if llm:
+            return llm, "DeepSeek V3", None
+
+    # Try Anthropic
+    if keys.get("anthropic"):
+        llm = safe_create_llm("anthropic/claude-3-5-sonnet-20241022", api_key=keys["anthropic"])
+        if llm:
+            return llm, "Claude 3.5 Sonnet", None
+
+    # Try Groq
     if keys.get("groq"):
         llm = safe_create_llm("groq/llama-3.1-8b-instant", api_key=keys["groq"])
-        if llm: return llm, "Groq Llama 3.1", None
+        if llm:
+            return llm, "Groq Llama 3.1", None
 
-    return None, None, "No active Llama or API key found! Please configure keys in Admin Portal."
+    return None, None, "No active API key found!"
 
 
 
@@ -205,7 +217,7 @@ def get_crew(selected_model="local_llama"):
 @app.route("/", methods=["GET"])
 def home():
     _, active_name, _ = resolve_active_llm()
-    llm_name = active_name or "No API Key Configured (Visit /admin)"
+    llm_name = active_name or "No API Key Configured"
     return render_template("index.html", active_llm=llm_name)
 
 @app.route("/residents")
@@ -326,131 +338,7 @@ def process_report():
             "error": f"AI Processing Error: {str(e)}"
         }), 500
 
-# --- ADMIN PORTAL ROUTES ---
-
-@app.route("/admin", methods=["GET"])
-def admin_portal():
-    masked_keys = get_masked_api_keys()
-    tickets = get_tickets()
-    query_logs = get_query_logs()
-    settings = get_settings()
-    _, active_model_name, _ = resolve_active_llm()
-    
-    return render_template(
-        "admin.html", 
-        masked_keys=masked_keys, 
-        tickets=tickets, 
-        query_logs=query_logs, 
-        settings=settings,
-        active_model_name=active_model_name or "None Configured"
-    )
-
-@app.route("/admin/api-keys", methods=["GET", "POST"])
-def admin_api_keys():
-    if request.method == "POST":
-        data = request.json or {}
-        new_keys = data.get("api_keys", {})
-        updated_masked = save_api_keys(new_keys)
-        
-        # Save optional default model
-        if "default_model" in data:
-            save_settings({"default_model": data["default_model"]})
-            
-        return jsonify({
-            "status": "success",
-            "message": "API Keys saved successfully!",
-            "masked_keys": updated_masked
-        })
-    else:
-        return jsonify({"masked_keys": get_masked_api_keys()})
-
-@app.route("/admin/test-key", methods=["POST"])
-def test_api_key():
-    data = request.json or {}
-    provider = data.get("provider", "").lower()
-    raw_key = data.get("api_key", "").strip()
-    
-    keys = get_api_keys()
-    key_to_use = raw_key if raw_key and not "..." in raw_key else keys.get(provider, "")
-    
-    if not key_to_use and provider != "ollama":
-        return jsonify({"status": "error", "message": f"No API key provided for {provider}."}), 400
-
-    try:
-        if provider == "openai":
-            res = requests.get("https://api.openai.com/v1/models", headers={"Authorization": f"Bearer {key_to_use}"}, timeout=5)
-            if res.status_code == 200:
-                return jsonify({"status": "success", "message": "OpenAI API Key is VALID and connected!"})
-            else:
-                return jsonify({"status": "error", "message": f"OpenAI Error ({res.status_code}): {res.json().get('error', {}).get('message', res.text)}"}), 400
-
-        elif provider == "gemini":
-            url = f"https://generativelanguage.googleapis.com/v1beta/models?key={key_to_use}"
-            res = requests.get(url, timeout=5)
-            if res.status_code == 200:
-                return jsonify({"status": "success", "message": "Google Gemini API Key is VALID and connected!"})
-            else:
-                return jsonify({"status": "error", "message": f"Gemini Error ({res.status_code}): {res.text[:150]}"}), 400
-
-        elif provider == "groq":
-            res = requests.get("https://api.groq.com/openai/v1/models", headers={"Authorization": f"Bearer {key_to_use}"}, timeout=5)
-            if res.status_code == 200:
-                return jsonify({"status": "success", "message": "Groq API Key is VALID and connected!"})
-            else:
-                return jsonify({"status": "error", "message": f"Groq Error ({res.status_code}): {res.text[:150]}"}), 400
-
-        elif provider == "qwen":
-            res = requests.get("https://dashscope.aliyuncs.com/compatible-mode/v1/models", headers={"Authorization": f"Bearer {key_to_use}"}, timeout=5)
-            if res.status_code == 200:
-                return jsonify({"status": "success", "message": "Alibaba Qwen / DashScope API Key is VALID!"})
-            else:
-                return jsonify({"status": "error", "message": f"Qwen Error ({res.status_code}): {res.text[:150]}"}), 400
-
-        elif provider == "anthropic":
-            res = requests.get("https://api.anthropic.com/v1/models", headers={"x-api-key": key_to_use, "anthropic-version": "2023-06-01"}, timeout=5)
-            if res.status_code in [200, 404]: # Some endpoints may vary but 200 means active
-                return jsonify({"status": "success", "message": "Anthropic Claude API Key is VALID!"})
-            else:
-                return jsonify({"status": "error", "message": f"Anthropic Error ({res.status_code}): {res.text[:150]}"}), 400
-
-        elif provider == "deepseek":
-            res = requests.get("https://api.deepseek.com/models", headers={"Authorization": f"Bearer {key_to_use}"}, timeout=5)
-            if res.status_code == 200:
-                return jsonify({"status": "success", "message": "DeepSeek API Key is VALID!"})
-            else:
-                return jsonify({"status": "error", "message": f"DeepSeek Error ({res.status_code}): {res.text[:150]}"}), 400
-
-        elif provider == "ollama":
-            ollama_url = raw_key or keys.get("ollama_url", "http://localhost:11434")
-            res = requests.get(f"{ollama_url}/api/tags", timeout=3)
-            if res.status_code == 200:
-                models = [m.get("name") for m in res.json().get("models", [])]
-                return jsonify({"status": "success", "message": f"Ollama Server Online! Available models: {', '.join(models[:5])}"})
-            else:
-                return jsonify({"status": "error", "message": f"Ollama Server not reachable at {ollama_url}"}), 400
-
-        else:
-            return jsonify({"status": "error", "message": f"Unknown provider: {provider}"}), 400
-
-    except Exception as e:
-        return jsonify({"status": "error", "message": f"Connection test failed: {str(e)}"}), 500
-
-@app.route("/admin/tickets/status", methods=["POST"])
-def admin_update_ticket_status():
-    data = request.json or {}
-    ticket_id = data.get("ticket_id")
-    department = data.get("department", "maintenance")
-    new_status = data.get("status", "Open")
-    
-    if not ticket_id:
-        return jsonify({"status": "error", "message": "Ticket ID required"}), 400
-        
-    updated = update_ticket_status(ticket_id, department, new_status)
-    if updated:
-        return jsonify({"status": "success", "message": f"Ticket {ticket_id} status updated to '{new_status}'"})
-    else:
-        return jsonify({"status": "error", "message": f"Ticket {ticket_id} not found."}), 404
-
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5001))
     app.run(host="0.0.0.0", port=port)
+
