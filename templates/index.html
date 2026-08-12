@@ -8,9 +8,6 @@
             <p>Welcome to Greenwood Village User Portal. Ask the AI Agent or manage resident queries.</p>
         </div>
         <div style="display: flex; gap: 10px;">
-            <a href="{{ url_for('admin_portal') }}" class="btn-export" style="background: var(--accent-blue); color: white; border: none; text-decoration: none;">
-                <i class="ph ph-key"></i> Manage API Keys (Admin)
-            </a>
             <button class="btn-export" onclick="window.print()">
                 <i class="ph ph-download-simple"></i> Export Report
             </button>
@@ -171,10 +168,10 @@
                         <i class="ph ph-megaphone"></i>
                         <span>Run AI<br>Analysis</span>
                     </div>
-                    <a href="{{ url_for('admin_portal') }}" class="action-btn" style="text-decoration: none; color: inherit;">
-                        <i class="ph ph-key"></i>
-                        <span>API Keys<br>Portal</span>
-                    </a>
+                    <div class="action-btn" onclick="document.getElementById('complaintModal').style.display='flex'">
+                        <i class="ph ph-sparkle"></i>
+                        <span>AI Agent<br>Assistant</span>
+                    </div>
                     <a href="{{ url_for('residents') }}" class="action-btn" style="text-decoration: none; color: inherit;">
                         <i class="ph ph-user-plus"></i>
                         <span>Add<br>Resident</span>

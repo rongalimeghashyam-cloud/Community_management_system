@@ -26,9 +26,12 @@ app = Flask(__name__)
 
 def get_local_ollama_llm(custom_url=None):
     """Returns an LLM instance pointing to local Ollama if available."""
+    # Skip local Ollama check if running on Render / production cloud
+    if os.environ.get("RENDER") or (os.environ.get("PORT") and not custom_url):
+        return None, None
     base_url = custom_url or os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
     try:
-        resp = requests.get(f"{base_url}/api/tags", timeout=2)
+        resp = requests.get(f"{base_url}/api/tags", timeout=0.5)
         if resp.status_code == 200:
             models_data = resp.json().get("models", [])
             model_names = [m.get("name", "") for m in models_data]
@@ -39,7 +42,7 @@ def get_local_ollama_llm(custom_url=None):
             if model_names:
                 return LLM(model=f"ollama/{model_names[0]}", base_url=base_url), f"Ollama ({model_names[0]})"
     except Exception as e:
-        print(f"Ollama connection check to {base_url}: {e}")
+        pass
     return None, None
 
 def safe_create_llm(model_name, api_key=None, base_url=None):

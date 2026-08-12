@@ -606,7 +606,6 @@
 
         <nav class="nav-links">
             <a class="nav-item {% if request.endpoint == 'home' %}active{% endif %}" href="{{ url_for('home') }}"><i class="ph ph-squares-four"></i> User Portal</a>
-            <a class="nav-item {% if request.endpoint == 'admin_portal' %}active{% endif %}" href="{{ url_for('admin_portal') }}"><i class="ph ph-sliders-horizontal"></i> Admin Portal</a>
             <a class="nav-item {% if request.endpoint == 'residents' %}active{% endif %}" href="{{ url_for('residents') }}"><i class="ph ph-users"></i> Residents</a>
             <a class="nav-item {% if request.endpoint == 'maintenance' %}active{% endif %}" href="{{ url_for('maintenance') }}"><i class="ph ph-wrench"></i> Maintenance</a>
             <a class="nav-item {% if request.endpoint == 'events' %}active{% endif %}" href="{{ url_for('events') }}"><i class="ph ph-calendar-blank"></i> Events</a>
@@ -620,7 +619,6 @@
         </button>
 
         <div class="bottom-links">
-            <a href="{{ url_for('admin_portal') }}" class="nav-item"><i class="ph ph-key"></i> API Keys Setup</a>
             <a href="{{ url_for('home') }}" class="nav-item"><i class="ph ph-sign-out"></i> Sign Out</a>
         </div>
     </aside>
